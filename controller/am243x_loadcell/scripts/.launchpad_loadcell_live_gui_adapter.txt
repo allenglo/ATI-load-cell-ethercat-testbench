@@ -1,0 +1,1 @@
+b'Realtek USB 2.5GbE Family Controller' | \Device\NPF_{1CFFB39B-3B58-42F4-A287-990A475BDC12}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?ccsproject version="1.0"?>
+<projectOptions>
+	<ccsVariant value="50:Theia-based"/>
+	<ccsVersion value="70.5.0"/>
+	<deviceFamily value="TMS470"/>
+	<connection value="common/targetdb/connections/TIXDS110_Connection.xml"/>
+	<executableActions value=""/>
+	<createSlaveProjects value=""/>
+	<activeTargetConfiguration value="targetConfigs/AM2434_ALX.ccxml"/>
+	<templateProperties value="id=system.projectspec.single_chip_servo"/>
+	<isTargetConfigurationManual value="false"/>
+	<origin value="C:\ti\motor_control_sdk_am243x_09_02_00_12\examples\tidep_01032_dual_motor_drive\single_chip_servo\am243x-lp\system_freertos_nortos\system.projectspec"/>
+	<filesToOpen value="system.xml"/>
+</projectOptions>

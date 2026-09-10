@@ -1,0 +1,26 @@
+# SDK downloads (large installers)
+sdk/
+downloads/
+
+# TI build artifacts (SDK lives in C:\ti, not here)
+*.out
+*.map
+*.lnkxml
+*.mcelf
+*.mcelf_xip
+*.mcelf.hs_fs
+*.tiimage
+obj/
+generated/
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+.venv/

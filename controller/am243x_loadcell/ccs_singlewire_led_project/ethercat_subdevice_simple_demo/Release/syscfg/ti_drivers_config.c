@@ -1,0 +1,423 @@
+/*
+ *  Copyright (C) 2021 Texas Instruments Incorporated
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *    Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ *    Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ *    Neither the name of Texas Instruments Incorporated nor the names of
+ *    its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * Auto generated file
+ */
+
+#include "ti_drivers_config.h"
+#include <drivers/sciclient.h>
+#include <string.h>
+
+/*
+ * I2C
+ */
+
+
+/* I2C Attributes */
+static I2C_HwAttrs gI2cHwAttrs[CONFIG_I2C_HLD_NUM_INSTANCES] =
+{
+    {
+        .baseAddr       = CSL_I2C0_CFG_BASE,
+        .intNum         = 193,
+        .eventId        = 0,
+        .funcClk        = 96000000U,
+        .enableIntr     = 1,
+        .intrPriority   = 4,
+        .ownTargetAddr   =
+        {
+            0x1C,
+            0x1C,
+            0x1C,
+            0x1C,
+        },
+    },
+};
+/* I2C objects - initialized by the driver */
+static I2C_Object gI2cObjects[CONFIG_I2C_HLD_NUM_INSTANCES];
+/* I2C driver configuration */
+I2C_Config gI2cConfig[CONFIG_I2C_HLD_NUM_INSTANCES] =
+{
+    {
+        .object = &gI2cObjects[CONFIG_I2C0],
+        .hwAttrs = &gI2cHwAttrs[CONFIG_I2C0]
+    },
+};
+
+uint32_t gI2cConfigNum = CONFIG_I2C_HLD_NUM_INSTANCES;
+
+
+/*
+ * OSPI
+ */
+
+
+/* Regions restricted for DMA. We should use CPU memcpy in these cases */
+static OSPI_AddrRegion gOspiDmaRestrictRegions[] = 
+{
+    {
+        .regionStartAddr = CSL_R5FSS0_ATCM_BASE,
+        .regionSize      = CSL_R5FSS0_ATCM_SIZE,
+    },  
+    {
+        .regionStartAddr = CSL_MCU_M4FSS0_IRAM_BASE,
+        .regionSize      = CSL_MCU_M4FSS0_IRAM_SIZE,
+    },  
+    {
+        .regionStartAddr = CSL_MCU_M4FSS0_DRAM_BASE,
+        .regionSize      = CSL_MCU_M4FSS0_DRAM_SIZE,
+    },  
+    {
+        .regionStartAddr = 0xFFFFFFFFU,
+        .regionSize      = 0U,
+    }
+};
+
+/* OSPI attributes */
+static OSPI_Attrs gOspiAttrs[CONFIG_OSPI_NUM_INSTANCES] =
+{
+    {
+        .baseAddr             = CSL_FSS0_OSPI0_CTRL_BASE,
+        .protocol             = OSPI_PROTO_4S_4D_4D,
+        .dataBaseAddr         = CSL_FSS0_DAT_REG1_BASE,
+        .inputClkFreq         = 200000000U,
+        .intrNum              = 171U,
+        .intrEnable           = FALSE,
+        .intrPriority         = 4U,
+        .dmaEnable            = FALSE,
+        .phyEnable            = FALSE,
+        .dacEnable            = FALSE,
+        .chipSelect           = OSPI_CS0,
+        .frmFmt               = OSPI_FF_POL0_PHA0,
+        .decChipSelect        = OSPI_DECODER_SELECT4,
+        .baudRateDiv          = 4,
+        .dmaRestrictedRegions = gOspiDmaRestrictRegions,
+    },
+};
+/* OSPI objects - initialized by the driver */
+static OSPI_Object gOspiObjects[CONFIG_OSPI_NUM_INSTANCES];
+
+/* OSPI driver configuration */
+OSPI_Config gOspiConfig[CONFIG_OSPI_NUM_INSTANCES] =
+{
+    {
+        &gOspiAttrs[CONFIG_OSPI0],
+        &gOspiObjects[CONFIG_OSPI0],
+    },
+};
+
+uint32_t gOspiConfigNum = CONFIG_OSPI_NUM_INSTANCES;
+
+#include <drivers/ospi/v0/lld/dma/udma/ospi_udma_lld.h>
+OSPI_DmaConfig gOspiDmaConfig[CONFIG_OSPI_NUM_DMA_INSTANCES] =
+{
+};
+
+uint32_t gOspiDmaConfigNum = CONFIG_OSPI_NUM_DMA_INSTANCES;
+
+/*
+ * GPIO
+ */
+
+/* ----------- GPIO Direction, Trigger, Interrupt initialization ----------- */
+
+void GPIO_init()
+{
+    uint32_t    baseAddr;
+
+    /* Instance 0 */
+    /* Get address after translation translate */
+    baseAddr = (uint32_t) AddrTranslateP_getLocalAddr(CONFIG_GPIO_LED_STATUS_BASE_ADDR);
+    GPIO_pinWriteLow(baseAddr, CONFIG_GPIO_LED_STATUS_PIN);
+
+    GPIO_setDirMode(baseAddr, CONFIG_GPIO_LED_STATUS_PIN, CONFIG_GPIO_LED_STATUS_DIR);
+    /* Instance 1 */
+    /* Get address after translation translate */
+    baseAddr = (uint32_t) AddrTranslateP_getLocalAddr(CONFIG_GPIO_LED_ERROR_BASE_ADDR);
+    GPIO_pinWriteLow(baseAddr, CONFIG_GPIO_LED_ERROR_PIN);
+
+    GPIO_setDirMode(baseAddr, CONFIG_GPIO_LED_ERROR_PIN, CONFIG_GPIO_LED_ERROR_DIR);
+    /* Instance 2 */
+    /* Get address after translation translate */
+    baseAddr = (uint32_t) AddrTranslateP_getLocalAddr(CONFIG_GPIO0_PHYRESET0_BASE_ADDR);
+    GPIO_pinWriteLow(baseAddr, CONFIG_GPIO0_PHYRESET0_PIN);
+
+    GPIO_setDirMode(baseAddr, CONFIG_GPIO0_PHYRESET0_PIN, CONFIG_GPIO0_PHYRESET0_DIR);
+    /* Instance 3 */
+    /* Get address after translation translate */
+    baseAddr = (uint32_t) AddrTranslateP_getLocalAddr(CONFIG_GPIO0_PHYRESET1_BASE_ADDR);
+    GPIO_pinWriteLow(baseAddr, CONFIG_GPIO0_PHYRESET1_PIN);
+
+    GPIO_setDirMode(baseAddr, CONFIG_GPIO0_PHYRESET1_PIN, CONFIG_GPIO0_PHYRESET1_DIR);
+}
+
+
+/* ----------- GPIO Interrupt de-initialization ----------- */
+void GPIO_deinit()
+{
+
+}
+
+/*
+ * MCSPI
+ */
+
+#include "ti_drivers_open_close.h"
+
+uint32_t gMcspiNumCh[1] =
+{
+    CONFIG_MCSPI0_NUM_CH,
+};
+
+/* MCSPI atrributes */
+static MCSPI_Attrs gMcspiAttrs[CONFIG_MCSPI_NUM_INSTANCES] =
+{
+    {
+        .baseAddr           = CSL_MCSPI0_CFG_BASE,
+        .inputClkFreq       = 50000000U,
+        .intrNum            = 204,
+        .operMode           = MCSPI_OPER_MODE_INTERRUPT,
+        .intrPriority       = 4U,
+        .chMode             = MCSPI_CH_MODE_SINGLE,
+        .pinMode            = MCSPI_PINMODE_4PIN,
+        .initDelay          = MCSPI_INITDLY_0,
+        .multiWordAccess    = FALSE,
+
+    },
+};
+
+
+/* MCSPI objects - initialized by the driver */
+static MCSPI_Object gMcspiObjects[CONFIG_MCSPI_NUM_INSTANCES];
+/* MCSPI driver configuration */
+MCSPI_Config gMcspiConfig[CONFIG_MCSPI_NUM_INSTANCES] =
+{
+    {
+        &gMcspiAttrs[CONFIG_MCSPI0],
+        &gMcspiObjects[CONFIG_MCSPI0],
+    },
+};
+
+uint32_t gMcspiConfigNum = CONFIG_MCSPI_NUM_INSTANCES;
+
+#include <drivers/mcspi/v0/lld/dma/mcspi_dma.h>
+MCSPI_DmaConfig gMcspiDmaConfig =
+{
+    .fxns        = NULL,
+    .mcspiDmaArgs = (void *)NULL,
+};
+
+MCSPI_DmaHandle gMcspiDmaHandle[0] =
+{
+};
+
+
+uint32_t gMcspiDmaConfigNum = CONFIG_MCSPI_NUM_DMA_INSTANCES;
+
+/*
+ * UDMA
+ */
+/* UDMA driver instance object */
+Udma_DrvObject          gUdmaDrvObj[CONFIG_UDMA_NUM_INSTANCES];
+/* UDMA driver instance init params */
+static Udma_InitPrms    gUdmaInitPrms[CONFIG_UDMA_NUM_INSTANCES] =
+{
+    {
+        .instId             = UDMA_INST_ID_PKTDMA_0,
+        .skipGlobalEventReg = FALSE,
+        .virtToPhyFxn       = Udma_defaultVirtToPhyFxn,
+        .phyToVirtFxn       = Udma_defaultPhyToVirtFxn,
+    },
+};
+
+/*
+ * PRUICSS
+ */
+/* PRUICSS HW attributes - provided by the driver */
+extern PRUICSS_HwAttrs gPruIcssHwAttrs_ICSSG1;
+
+/* PRUICSS objects - initialized by the driver */
+static PRUICSS_Object gPruIcssObjects[CONFIG_PRUICSS_NUM_INSTANCES];
+/* PRUICSS driver configuration */
+PRUICSS_Config gPruIcssConfig[CONFIG_PRUICSS_NUM_INSTANCES] =
+{
+    {
+        .object = &gPruIcssObjects[CONFIG_PRU_ICSS1],
+        .hwAttrs = &gPruIcssHwAttrs_ICSSG1
+    },
+};
+
+uint32_t gPruIcssConfigNum = CONFIG_PRUICSS_NUM_INSTANCES;
+
+
+/*
+ * UART
+ */
+
+/* UART atrributes */
+static UART_Attrs gUartAttrs[CONFIG_UART_NUM_INSTANCES] =
+{
+        {
+            .baseAddr           = CSL_UART0_BASE,
+            .inputClkFreq       = 48000000U,
+        },
+};
+/* UART objects - initialized by the driver */
+static UART_Object gUartObjects[CONFIG_UART_NUM_INSTANCES];
+/* UART driver configuration */
+UART_Config gUartConfig[CONFIG_UART_NUM_INSTANCES] =
+{
+        {
+            &gUartAttrs[CONFIG_UART_CONSOLE],
+            &gUartObjects[CONFIG_UART_CONSOLE],
+        },
+};
+
+
+uint32_t gUartConfigNum = CONFIG_UART_NUM_INSTANCES;
+
+#include <drivers/uart/v0/lld/dma/uart_dma.h>
+#include <drivers/udma.h>
+UART_DmaHandle gUartDmaHandle[] =
+{
+
+};
+Udma_DrvObject gUdmaDrvObj[] =
+{
+
+};
+
+uint32_t gUartDmaConfigNum = CONFIG_UART_NUM_DMA_INSTANCES;
+
+
+void Drivers_uartInit(void)
+{
+    UART_init();
+}
+
+
+/*
+ * MCU_LBIST
+ */
+
+uint32_t gMcuLbistTestStatus = 0U;
+
+void SDL_lbist_selftest(void)
+{
+}
+
+void Pinmux_init(void);
+void PowerClock_init(void);
+void PowerClock_deinit(void);
+/*
+ * Common Functions
+ */
+void System_init(void)
+{
+    /* DPL init sets up address transalation unit, on some CPUs this is needed
+     * to access SCICLIENT services, hence this needs to happen first
+     */
+    Dpl_init();
+    /* We should do sciclient init before we enable power and clock to the peripherals */
+    /* SCICLIENT init */
+    {
+        int32_t retVal = SystemP_SUCCESS;
+
+        retVal = Sciclient_init(CSL_CORE_ID_R5FSS0_0);
+        DebugP_assertNoLog(SystemP_SUCCESS == retVal);
+    }
+
+    
+    /* initialize PMU */
+    CycleCounterP_init(SOC_getSelfCpuClk());
+
+    PowerClock_init();
+    /* Now we can do pinmux */
+    Pinmux_init();
+    /* finally we initialize all peripheral drivers */
+
+
+    I2C_init();
+
+    OSPI_init();
+    GPIO_init();
+    MCSPI_init();
+    /* UDMA */
+    {
+        uint32_t        instId;
+        int32_t         retVal = UDMA_SOK;
+
+        for(instId = 0U; instId < CONFIG_UDMA_NUM_INSTANCES; instId++)
+        {
+            retVal += Udma_init(&gUdmaDrvObj[instId], &gUdmaInitPrms[instId]);
+            DebugP_assert(UDMA_SOK == retVal);
+        }
+    }
+    PRUICSS_init();
+    /* PRU IEP Enable SYNC MODE */
+    CSL_REG32_WR(CSL_PRU_ICSSG1_PR1_CFG_SLV_BASE + CSL_ICSSCFG_IEPCLK, 1);
+
+    Drivers_uartInit();
+}
+
+void System_deinit(void)
+{
+
+
+    I2C_deinit();
+
+    OSPI_deinit();
+    GPIO_deinit();
+    MCSPI_deinit();
+    /* UDMA */
+    {
+        uint32_t        instId;
+        int32_t         retVal = UDMA_SOK;
+
+        for(instId = 0U; instId < CONFIG_UDMA_NUM_INSTANCES; instId++)
+        {
+            retVal += Udma_deinit(&gUdmaDrvObj[instId]);
+            DebugP_assert(UDMA_SOK == retVal);
+        }
+    }
+    PRUICSS_deinit();
+    UART_deinit();
+    PowerClock_deinit();
+    /* SCICLIENT deinit */
+    {
+        int32_t         retVal = SystemP_SUCCESS;
+
+        retVal = Sciclient_deinit();
+        DebugP_assertNoLog(SystemP_SUCCESS == retVal);
+    }
+
+    Dpl_deinit();
+}

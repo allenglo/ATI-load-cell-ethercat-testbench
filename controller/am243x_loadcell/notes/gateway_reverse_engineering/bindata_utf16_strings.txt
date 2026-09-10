@@ -1,0 +1,32 @@
+Root Entry
+DeviceType
+VersionNumber
+UUIDOfDTM
+<?xml version="1.0"?>
+<FDT xmlns="x-schema:DTMInitSchema.xml" xmlns:a="x-schema:DTMInitSchema.xml" xmlns:fdt="x-schema:FDTDataTypesSchema.xml" xmlns:dtminfo="x-schema:DTMInformationSchema.xml">
+<fdt:DtmDeviceType deviceTypeId="0" deviceTypeInformation="6A02ECE4-82B6-460d-A6FD-587F7CE105B1" subDeviceType="" classificationId="dtmSpecific" readAccess="1" writeAccess="0"><fdt:VersionInformation readAccess="1" writeAccess="0" name="NT 100-XX-XX" vendor="Hilscher GmbH" version="V1.1100.7.4934" date="2021-02-26"/>
+<fdt:SupportedLanguages>
+<fdt:LanguageId languageId="1031"/>
+<fdt:LanguageId languageId="1033"/>
+</fdt:SupportedLanguages>
+<fdt:BusCategories>
+<fdt:BusCategory busCategory="00000000-0000-0000-0000-000000000000" busCategoryName="DPM">
+<fdt:CommunicationTypeEntry communicationType="required"/>
+</fdt:BusCategory>
+<fdt:BusCategory busCategory="417B1B08-CCB8-4445-B642-F9CA05C663CD" busCategoryName="CANopen">
+<fdt:BusCategory busCategory="D420DA36-F4EB-43b6-8560-C39EE9DCB71D" busCategoryName="CC-Link">
+<fdt:BusCategory busCategory="4BE58BF2-A92D-4E4A-BBC8-A87F2EFFFA95" busCategoryName="DeviceNet">
+<fdt:BusCategory busCategory="6CD80F51-019D-4E60-AEAC-B10144943B4B" busCategoryName="EtherNet/IP">
+<fdt:BusCategory busCategory="F3D5F96F-BB67-4210-9A8A-0D98B4C426DA" busCategoryName="EtherCAT">
+<fdt:BusCategory busCategory="59629A41-285F-11DB-A98B-0800200C9A66" busCategoryName="Open Modbus/TCP">
+<fdt:BusCategory busCategory="4A4D539D-EBEE-43c5-A390-2AF6030546D9" busCategoryName="POWERLINK">
+<fdt:BusCategory busCategory="036D1499-387B-11D4-86E1-00E0987270B9" busCategoryName="PROFIBUS DPV 1">
+<fdt:BusCategory busCategory="036D1497-387B-11D4-86E1-00E0987270B9" busCategoryName="PROFIBUS DPV 0">
+<fdt:BusCategory busCategory="DFC98364-DAB8-493B-BB92-23B3F92FEBCD" busCategoryName="PROFINET IO">
+<fdt:BusCategory busCategory="64DB607B-965C-420b-BB19-93FAE10279D5" busCategoryName="SERCOS III">
+<fdt:BusCategory busCategory="8F5C6C37-C189-4ebc-B6D2-C1D5342D95D3" busCategoryName="Modbus RTU">
+</fdt:BusCategories>
+<fdt:DeviceIcon path="C:\Program Files (x86)\Hilscher GmbH\SYCONnet\netGatewayDTM\ICON\netGateway.ICO"/>
+</fdt:DtmDeviceType>
+</FDT>
+zippedStream

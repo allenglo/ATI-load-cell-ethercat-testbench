@@ -1,0 +1,6 @@
+<fdt:BusCategory busCategory="F3D5F96F-BB67-4210-9A8A-0D98B4C426DA" busCategoryName="EtherCAT">
+<fdt:BusCategory busCategory="59629A41-285F-11DB-A98B-0800200C9A66" busCategoryName="Open Modbus/TCP">
+<fdt:BusCategory busCategory="8F5C6C37-C189-4ebc-B6D2-C1D5342D95D3" busCategoryName="Modbus RTU">
+<fdt:BusCategory busCategory="F3D5F96F-BB67-4210-9A8A-0D98B4C426DA" busCategoryName="EtherCAT">
+<fdt:BusCategory busCategory="59629A41-285F-11DB-A98B-0800200C9A66" busCategoryName="Open Modbus/TCP">
+<fdt:BusCategory busCategory="8F5C6C37-C189-4ebc-B6D2-C1D5342D95D3" busCategoryName="Modbus RTU">

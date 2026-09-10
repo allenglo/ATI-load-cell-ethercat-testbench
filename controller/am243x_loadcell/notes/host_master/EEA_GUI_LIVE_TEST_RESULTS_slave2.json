@@ -1,0 +1,195 @@
+{
+  "timestamp": "2026-07-01T21:52:06.543246Z",
+  "port": "COM18",
+  "baud": 115200,
+  "parity": "E",
+  "stop_bits": 1,
+  "slave": 2,
+  "checks": {
+    "poll_fc4": {
+      "tx": "020400000008f1ff",
+      "rx": "020410042d26fb78400000006c0000000039ba49ae",
+      "valid_crc": true,
+      "regs": [
+        1069,
+        9979,
+        30784,
+        0,
+        108,
+        0,
+        0,
+        14778
+      ]
+    },
+    "poll_fc3": {
+      "tx": "020300000008443f",
+      "rx": "0203100000387a000039ba64ad60f100000000aa0c",
+      "valid_crc": true,
+      "regs": [
+        0,
+        14458,
+        0,
+        14778,
+        25773,
+        24817,
+        0,
+        0
+      ]
+    },
+    "profile_poll": [
+      {
+        "profile": {
+          "name": "Addr1 FC4 R0 C8",
+          "slave": 1,
+          "fc": 4,
+          "reg": 0,
+          "count": 8
+        },
+        "tx": "010400000008f1cc",
+        "rx": "01041062ce2630ca0000001ce5c0f100000000163c",
+        "valid_crc": true,
+        "regs": [
+          25294,
+          9776,
+          51712,
+          0,
+          7397,
+          49393,
+          0,
+          0
+        ]
+      },
+      {
+        "profile": {
+          "name": "Addr2 FC4 R0 C10",
+          "slave": 2,
+          "fc": 4,
+          "reg": 0,
+          "count": 10
+        },
+        "tx": "02040000000a703e",
+        "rx": "020414287926fda0420000006e0000000039ba00000000b5ed",
+        "valid_crc": true,
+        "regs": [
+          10361,
+          9981,
+          41026,
+          0,
+          110,
+          0,
+          0,
+          14778,
+          0,
+          0
+        ]
+      },
+      {
+        "profile": {
+          "name": "Addr3 FC4 R3 C7",
+          "slave": 3,
+          "fc": 4,
+          "reg": 3,
+          "count": 7
+        },
+        "tx": "030400030007402a",
+        "rx": "03040e0000006c000000000000ff00ff50bcce",
+        "valid_crc": true,
+        "regs": [
+          0,
+          108,
+          0,
+          0,
+          0,
+          65280,
+          65360
+        ]
+      },
+      {
+        "profile": {
+          "name": "Addr4 FC4 R0 C8",
+          "slave": 4,
+          "fc": 4,
+          "reg": 0,
+          "count": 8
+        },
+        "tx": "040400000008f199",
+        "rx": "",
+        "valid_crc": false,
+        "regs": null
+      }
+    ],
+    "output_block_read": {
+      "tx": "020300060014a5f7",
+      "rx": "02830230f1",
+      "valid_crc": true,
+      "regs": [
+        12529
+      ]
+    },
+    "output_block_writeback": [],
+    "single_writeback": {
+      "pre_read": {
+        "tx": "0203000600016438",
+        "rx": "0203020000fc44",
+        "valid_crc": true,
+        "regs": [
+          0
+        ]
+      },
+      "write": {
+        "tx": "02060006000069f8",
+        "rx": "02060006000069f8",
+        "valid_crc": true,
+        "echo_match": true
+      }
+    },
+    "led_write_path": [
+      {
+        "reg": 4370,
+        "read": {
+          "tx": "0203111200012100",
+          "rx": "02830230f1",
+          "valid_crc": true,
+          "regs": [
+            12529
+          ]
+        },
+        "write": {
+          "tx": "0206111230f1f944",
+          "rx": "02860233a1",
+          "valid_crc": false,
+          "echo_match": false
+        }
+      },
+      {
+        "reg": 4371,
+        "read": {
+          "tx": "02031113000170c0",
+          "rx": "02830230f1",
+          "valid_crc": true,
+          "regs": [
+            12529
+          ]
+        },
+        "write": {
+          "tx": "0206111330f1a884",
+          "rx": "02860233a1",
+          "valid_crc": false,
+          "echo_match": false
+        }
+      }
+    ]
+  },
+  "plausibility": {
+    "poll_fc4_ok": true,
+    "poll_fc3_ok": true,
+    "profile_ok_count": 3,
+    "profile_total": 4,
+    "out_block_read_ok": true,
+    "out_block_write_ok_count": 0,
+    "out_block_write_total": 0,
+    "single_write_ok": true,
+    "led_write_ok_count": 0,
+    "led_write_total": 2
+  }
+}

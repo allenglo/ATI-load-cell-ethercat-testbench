@@ -1,0 +1,4 @@
+pysoem==1.1.13
+scapy==2.7.0
+numpy>=1.26
+pandas>=2.2

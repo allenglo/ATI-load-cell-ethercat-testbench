@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>single_chip_servo</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.cdt.managedbuilder.core.genmakebuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.ti.ccstudio.core.ccsSystemNature</nature>
+		<nature>com.ti.ccstudio.core.ccsNature</nature>
+		<nature>org.eclipse.cdt.core.cnature</nature>
+		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>README.html</name>
+			<type>1</type>
+			<locationURI>MOTOR_CONTROL_SDK_PATH/docs/api_guide_am243x/EXAMPLE_TIDEP_01032_REFERENCE_DESIGN.html</locationURI>
+		</link>
+	</linkedResources>
+	<variableList>
+		<variable>
+			<name>MOTOR_CONTROL_SDK_PATH</name>
+			<value>$%7BCOM_TI_MOTOR_CONTROL_SDK_AM243X_INSTALL_DIR%7D</value>
+		</variable>
+	</variableList>
+</projectDescription>

@@ -1,0 +1,77 @@
+### ContainedBaseDTMSection
+<Module  systemTag="5B3C5A31-3352-4DA2-AA57-9BF781A84F71" displayName="40 Bytes Out" moduleType="40 Bytes Out" moduleAddress="2">
+<Module  systemTag="9189DFA6-C97B-4981-8631-C2E7032869C2" displayName="84 Bytes In" moduleType="84 Bytes In" moduleAddress="1">
+<Module systemTag='5B3C5A31-3352-4DA2-AA57-9BF781A84F71' displayName='40 Bytes Out' 
+          moduleType='40 Bytes Out' moduleAddress='2' disabled='0'>
+<Module systemTag='9189DFA6-C97B-4981-8631-C2E7032869C2' displayName='84 Bytes In' 
+          moduleType='84 Bytes In' moduleAddress='1' disabled='0'>
+<Parameter id="ENABLE_ADDRESS_SWITCH" datatype="22" default="0" lowerLimit="0" upperLimit="1" hidden="0" disabled="1" validate="1"/>
+<Signal systemTag="083c622d-3f72-45f6-b378-890e8147e856" displayName="ToEEA.AdditionalToS3" signalType="input" signalAccessPath="24" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="0d4792e1-1d55-4247-a6d7-ed7c14c7bbd6" displayName="ToEEA.AdditionalToS9" signalType="input" signalAccessPath="36" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="0e7a0065-8584-4c39-b333-bd875d949bdb" displayName="ToEEA.S3Terminator" signalType="input" signalAccessPath="9" dataType="unsigned8" arrayElements="1" opc="1">
+<Signal systemTag="1ea98548-5828-4f6e-ad1f-2609d6128c79" displayName="FromROI.S4FrameSQNLSB" signalType="output" signalAccessPath="10" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="3880b4ce-dae0-4d70-bac3-94d0e0d93a49" displayName="FromROI.S4LatencySQNReturn" signalType="output" signalAccessPath="6" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="3eb741cd-4bda-45f4-a34d-c546efef1621" displayName="FromROI.S4FrameSQNMSB" signalType="output" signalAccessPath="8" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="4655f959-40d4-40be-9818-7bf2bcfdbe4b" displayName="ToEEA.AdditionalToS10" signalType="input" signalAccessPath="38" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="5760710f-d3d9-4028-9961-99ef8e090ab8" displayName="ToEEA.AdditionalToS5" signalType="input" signalAccessPath="28" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="652719e0-c226-4ac3-a311-ace43699f52c" displayName="FromEEA.S1EncoderValue" signalType="output" signalAccessPath="62" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="6822494d-9338-44b6-b5cf-6f8ccb331888" displayName="FromROI.S4GeneralInfo" signalType="output" signalAccessPath="4" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="6ebfb026-b1e2-4dad-97b8-33a8c71fa3cb" displayName="ToEEA.AdditionalToS2" signalType="input" signalAccessPath="22" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="6f59d105-7e37-48e1-815d-c355185a6413" displayName="ToEEA.AdditionalToS6" signalType="input" signalAccessPath="30" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="8b9f76fd-1c6d-4830-b375-ae7966791282" displayName="ToEEA.S3Hearbeat" signalType="input" signalAccessPath="8" dataType="unsigned8" arrayElements="1" opc="1">
+<Signal systemTag="913a77cd-ada2-4f38-8fa2-64fb3fa772bd" displayName="ToEEA.AdditionalToS8" signalType="input" signalAccessPath="34" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="92b74acc-3447-453f-b81f-21c7eabca028" displayName="ToEEA.AdditionalToS1" signalType="input" signalAccessPath="20" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="a89e2427-f71e-4ee2-939e-2ce92ab21e31" displayName="FromEEA.S3EncoderValue" signalType="output" signalAccessPath="30" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="ddf3fe72-7452-40a9-8d90-2ae97fd0d221" displayName="ToROI.S4LatencySQNInput" signalType="input" signalAccessPath="6" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="e4991102-9fd0-4ad4-a46a-1a16ce86510f" displayName="ToEEA.AdditionalToS4" signalType="input" signalAccessPath="26" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="e58fe9de-3dad-4e3b-b0fc-681bbc49b9fc" displayName="ToEEA.AdditionalToS7" signalType="input" signalAccessPath="32" dataType="unsigned16" arrayElements="1" opc="1">
+<Signal systemTag="f002756e-f2f8-4cc0-acd7-52f71c1d872b" displayName="FromEEA.S2EncoderValue" signalType="output" signalAccessPath="46" dataType="unsigned16" arrayElements="1" opc="1">
+
+### ContainedSubDTMSection
+<Device systemTag='067DB3E9-7553-4283-97B3-01AB54FAD103' displayName='Device' stationAddress='Addr 2'>
+<Device systemTag='82BBC617-8AC2-42CD-8606-B4EAF126864B' displayName='Device' stationAddress='Addr 4'>
+<Device systemTag='ABB05A44-5E7B-49AB-B6DF-4C8CF7510A69' displayName='Device' stationAddress='Addr 3'>
+<Device systemTag='F5182E6F-DB6B-4DA0-9A5F-FC1769A4D2C6' displayName='Device' stationAddress='Addr 1'>
+<Device systemTag="067DB3E9-7553-4283-97B3-01AB54FAD103" displayName="Device" stationAddress="Addr 2">
+<Device systemTag="82BBC617-8AC2-42CD-8606-B4EAF126864B" displayName="Device" stationAddress="Addr 4">
+<Device systemTag="ABB05A44-5E7B-49AB-B6DF-4C8CF7510A69" displayName="Device" stationAddress="Addr 3">
+<Device systemTag="F5182E6F-DB6B-4DA0-9A5F-FC1769A4D2C6" displayName="Device" stationAddress="Addr 1">
+<Module  systemTag="02A152A4-7072-42D0-9092-C354BEAF842E" displayName="8 Words In" moduleType="8 Words In" moduleAddress="Register 0">
+<Module  systemTag="13F9CB3D-4BD4-4722-AF78-EBBB553CD3D7" displayName="1 Word Out" moduleType="1 Word Out" moduleAddress="Register 6">
+<Module  systemTag="19A3267C-4A3E-4E7E-A329-A44034D5D1A0" displayName="4 Words Out" moduleType="4 Words Out" moduleAddress="Register 6">
+<Module  systemTag="A021642F-B44F-45F8-9042-1555F2A86985" displayName="4 Words Out" moduleType="4 Words Out" moduleAddress="Register 6">
+<Module  systemTag="A816187A-9BF7-4C98-A579-9AD38153337A" displayName="1 Word Out" moduleType="1 Word Out" moduleAddress="Register 6">
+<Module  systemTag="B30C3AE3-47A7-469D-BC64-5604D3A27838" displayName="8 Words In" moduleType="8 Words In" moduleAddress="Register 0">
+<Module  systemTag="C2C09D50-4EB6-469A-828C-5EE18D9910EE" displayName="10 Words In" moduleType="10 Words In" moduleAddress="Register 0">
+<Module  systemTag="C8AFDC48-7090-4C27-8941-669098E3EFE2" displayName="7 Words In" moduleType="7 Words In" moduleAddress="Register 3">
+<Module systemTag="02A152A4-7072-42D0-9092-C354BEAF842E" displayName="8 Words In" moduleType="8 Words In" moduleAddress="Register 0" moduleId="0" disabled="0">
+<Module systemTag="13F9CB3D-4BD4-4722-AF78-EBBB553CD3D7" displayName="1 Word Out" moduleType="1 Word Out" moduleAddress="Register 6" moduleId="6" disabled="0">
+<Module systemTag="19A3267C-4A3E-4E7E-A329-A44034D5D1A0" displayName="4 Words Out" moduleType="4 Words Out" moduleAddress="Register 6" moduleId="6" disabled="0">
+<Module systemTag="A021642F-B44F-45F8-9042-1555F2A86985" displayName="4 Words Out" moduleType="4 Words Out" moduleAddress="Register 6" moduleId="6" disabled="0">
+<Module systemTag="A816187A-9BF7-4C98-A579-9AD38153337A" displayName="1 Word Out" moduleType="1 Word Out" moduleAddress="Register 6" moduleId="6" disabled="0">
+<Module systemTag="B30C3AE3-47A7-469D-BC64-5604D3A27838" displayName="8 Words In" moduleType="8 Words In" moduleAddress="Register 0" moduleId="0" disabled="0">
+<Module systemTag="C2C09D50-4EB6-469A-828C-5EE18D9910EE" displayName="10 Words In" moduleType="10 Words In" moduleAddress="Register 0" moduleId="0" disabled="0">
+<Module systemTag="C8AFDC48-7090-4C27-8941-669098E3EFE2" displayName="7 Words In" moduleType="7 Words In" moduleAddress="Register 3" moduleId="3" disabled="0">
+<Parameter id="ADDRESS_MAPPING" datatype="22" default="0" lowerLimit="0" upperLimit="2" hidden="0" disabled="1" validate="1"/>
+<Parameter id="ADDRESS" datatype="22" default="10" lowerLimit="1" upperLimit="247" hidden="0" disabled="0" validate="1"/>
+<Parameter id="BAUD_RATE" datatype="22" default="115200" lowerLimit="1200" upperLimit="115200" hidden="0" disabled="0" validate="1"/>
+<Parameter id="COM_INTERFACE" datatype="22" default="1" lowerLimit="0" upperLimit="3" hidden="0" disabled="0" validate="1"/>
+<Parameter id="FRAME_FORMAT" datatype="22" default="0" lowerLimit="0" upperLimit="1" hidden="0" disabled="0" validate="1"/>
+<Parameter id="MODE" datatype="22" default="1" lowerLimit="0" upperLimit="2" hidden="0" disabled="0" validate="1"/>
+<Parameter id="PARITY" datatype="22" default="1" lowerLimit="0" upperLimit="2" hidden="0" disabled="0" validate="1"/>
+<Parameter id="REGISTER" datatype="22" default="2880" lowerLimit="0" upperLimit="65639" hidden="0" disabled="0" validate="1"/>
+<Parameter id="RETRIES" datatype="22" default="0" lowerLimit="0" upperLimit="10" hidden="0" disabled="0" validate="1"/>
+<Parameter id="RTS_CONTROL" datatype="22" default="1" lowerLimit="0" upperLimit="1" hidden="0" disabled="0" validate="1"/>
+<Parameter id="STOP_BITS" datatype="22" default="1" lowerLimit="1" upperLimit="2" hidden="0" disabled="0" validate="1"/>
+<Parameter id="TIMEOUT" datatype="22" default="10" lowerLimit="10" upperLimit="10000" hidden="0" disabled="0" validate="1"/>
+<Protocol id="11" name="Modbus RTU" firmware="" configurationGUI="nxSetupSDK.ModbusRTUConfig.11" diagnosticGUI="nxSetupSDK.DiagGUIControl.11" configGenerator="nxSetupSDK.NetIcModbusRtuPacketGen.11">
+<Signal systemTag="0252450e-6de2-4603-9c1c-2809f64adc0b" displayName="S4GeneralInfo" signalType="input" signalAccessPath="6" dataType="unsigned16" arrayElements="1">
+<Signal systemTag="05378bac-505e-4b72-9100-a9e25b60b3d1" displayName="S4LatencySQN" signalType="output" signalAccessPath="0" dataType="unsigned16" arrayElements="1">
+<Signal systemTag="0d4e0f55-bb61-4989-9c97-64097eb57409" displayName="S4LatencySQN" signalType="input" signalAccessPath="4" dataType="unsigned16" arrayElements="1">
+<Signal systemTag="0da3e3c5-ba54-4d53-9556-f63043f2d0bb" displayName="S1EncoderValue" signalType="input" signalAccessPath="50" dataType="unsigned16" arrayElements="1">
+<Signal systemTag="16b50b34-cbdb-4d36-9f31-d939a6700bec" displayName="S3Terminator" signalType="output" signalAccessPath="15" dataType="unsigned8" arrayElements="1">
+<Signal systemTag="39d6ce34-b033-4a08-9b99-6be186f3ec0b" displayName="S2EncoderValue" signalType="input" signalAccessPath="34" dataType="unsigned16" arrayElements="1">
+<Signal systemTag="51954dd5-eda7-4340-803f-aaa876c99c0c" displayName="S3EncoderValue" signalType="input" signalAccessPath="14" dataType="unsigned16" arrayElements="1">
+<Signal systemTag="c88b8510-ad44-419c-a348-a3b164a4f217" displayName="S4FrameSQNMSB" signalType="input" signalAccessPath="2" dataType="unsigned16" arrayElements="1">
+<Signal systemTag="fae8fe88-654d-430d-b086-93ad6d71a30d" displayName="S4FrameSQNLSB" signalType="input" signalAccessPath="0" dataType="unsigned16" arrayElements="1">
+

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<configurations XML_version="1.2" id="configurations_0">
+    <configuration XML_version="1.2" id="AM243x_LP_XDS110">
+        <instance XML_version="1.2" desc="AM243x_LAUNCHPAD" href="boards/AM243x_LP.xml" id="AM243x_LAUNCHPAD_0" xml="AM243x_LP.xml" xmlpath="boards"/>
+        <connection XML_version="1.2" id="Texas Instruments XDS110 USB Debug Probe_0">
+            <instance XML_version="1.2" desc="Texas Instruments XDS110 USB Debug Probe_0" href="connections/TIXDS110_Connection.xml" id="Texas Instruments XDS110 USB Debug Probe_0" xml="TIXDS110_Connection.xml" xmlpath="connections"/>
+        </connection>
+    </configuration>
+</configurations>

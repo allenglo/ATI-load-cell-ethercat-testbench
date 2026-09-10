@@ -1,0 +1,12 @@
+# FIXED
+
+CUST_PHY_dp83869.o: \
+ C:/ti/ind_comms_sdk_am243x_11_00_00_08/examples/industrial_comms/custom_phy/src/CUST_PHY_dp83869.c \
+ C:/ti/ind_comms_sdk_am243x_11_00_00_08/examples/industrial_comms/custom_phy/inc/CUST_PHY_dp83869.h \
+ C:/ti/ind_comms_sdk_am243x_11_00_00_08/source/industrial_comms/common/inc/osal.h \
+ C:/ti/ind_comms_sdk_am243x_11_00_00_08/source/industrial_comms/common/inc/osal_error.h \
+ C:/ti/ind_comms_sdk_am243x_11_00_00_08/source/industrial_comms/common/inc/custom_phy.h
+C:/ti/ind_comms_sdk_am243x_11_00_00_08/examples/industrial_comms/custom_phy/inc/CUST_PHY_dp83869.h:
+C:/ti/ind_comms_sdk_am243x_11_00_00_08/source/industrial_comms/common/inc/osal.h:
+C:/ti/ind_comms_sdk_am243x_11_00_00_08/source/industrial_comms/common/inc/osal_error.h:
+C:/ti/ind_comms_sdk_am243x_11_00_00_08/source/industrial_comms/common/inc/custom_phy.h:

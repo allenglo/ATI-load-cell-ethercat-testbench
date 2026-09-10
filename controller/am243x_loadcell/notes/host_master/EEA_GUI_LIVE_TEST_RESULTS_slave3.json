@@ -1,0 +1,195 @@
+{
+  "timestamp": "2026-07-01T21:52:19.162714Z",
+  "port": "COM18",
+  "baud": 115200,
+  "parity": "E",
+  "stop_bits": 1,
+  "slave": 3,
+  "checks": {
+    "poll_fc4": {
+      "tx": "030400000008f02e",
+      "rx": "03041004d01fd3a6890000006d0000000000006ad7",
+      "valid_crc": true,
+      "regs": [
+        1232,
+        8147,
+        42633,
+        0,
+        109,
+        0,
+        0,
+        0
+      ]
+    },
+    "poll_fc3": {
+      "tx": "03030000000845ee",
+      "rx": "0303100000000000000000000000000000ff00dc11",
+      "valid_crc": true,
+      "regs": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        65280
+      ]
+    },
+    "profile_poll": [
+      {
+        "profile": {
+          "name": "Addr1 FC4 R0 C8",
+          "slave": 1,
+          "fc": 4,
+          "reg": 0,
+          "count": 8
+        },
+        "tx": "010400000008f1cc",
+        "rx": "01041063f826418a2b00001ce6c0f10000000060d0",
+        "valid_crc": true,
+        "regs": [
+          25592,
+          9793,
+          35371,
+          0,
+          7398,
+          49393,
+          0,
+          0
+        ]
+      },
+      {
+        "profile": {
+          "name": "Addr2 FC4 R0 C10",
+          "slave": 2,
+          "fc": 4,
+          "reg": 0,
+          "count": 10
+        },
+        "tx": "02040000000a703e",
+        "rx": "0204141d38270eae02000000760000000039ba000000004bb4",
+        "valid_crc": true,
+        "regs": [
+          7480,
+          9998,
+          44546,
+          0,
+          118,
+          0,
+          0,
+          14778,
+          0,
+          0
+        ]
+      },
+      {
+        "profile": {
+          "name": "Addr3 FC4 R3 C7",
+          "slave": 3,
+          "fc": 4,
+          "reg": 3,
+          "count": 7
+        },
+        "tx": "030400030007402a",
+        "rx": "03040e0000006f000000000000ff00ff50b38a",
+        "valid_crc": true,
+        "regs": [
+          0,
+          111,
+          0,
+          0,
+          0,
+          65280,
+          65360
+        ]
+      },
+      {
+        "profile": {
+          "name": "Addr4 FC4 R0 C8",
+          "slave": 4,
+          "fc": 4,
+          "reg": 0,
+          "count": 8
+        },
+        "tx": "040400000008f199",
+        "rx": "",
+        "valid_crc": false,
+        "regs": null
+      }
+    ],
+    "output_block_read": {
+      "tx": "030300060014a426",
+      "rx": "0383026131",
+      "valid_crc": true,
+      "regs": [
+        24881
+      ]
+    },
+    "output_block_writeback": [],
+    "single_writeback": {
+      "pre_read": {
+        "tx": "03030006000165e9",
+        "rx": "0303020000c184",
+        "valid_crc": true,
+        "regs": [
+          0
+        ]
+      },
+      "write": {
+        "tx": "0306000600006829",
+        "rx": "0306000600006829",
+        "valid_crc": true,
+        "echo_match": true
+      }
+    },
+    "led_write_path": [
+      {
+        "reg": 4370,
+        "read": {
+          "tx": "03031112000120d1",
+          "rx": "0383026131",
+          "valid_crc": true,
+          "regs": [
+            24881
+          ]
+        },
+        "write": {
+          "tx": "030611126131c555",
+          "rx": "0386026261",
+          "valid_crc": false,
+          "echo_match": false
+        }
+      },
+      {
+        "reg": 4371,
+        "read": {
+          "tx": "0303111300017111",
+          "rx": "0383026131",
+          "valid_crc": true,
+          "regs": [
+            24881
+          ]
+        },
+        "write": {
+          "tx": "0306111361319495",
+          "rx": "0386026261",
+          "valid_crc": false,
+          "echo_match": false
+        }
+      }
+    ]
+  },
+  "plausibility": {
+    "poll_fc4_ok": true,
+    "poll_fc3_ok": true,
+    "profile_ok_count": 3,
+    "profile_total": 4,
+    "out_block_read_ok": true,
+    "out_block_write_ok_count": 0,
+    "out_block_write_total": 0,
+    "single_write_ok": true,
+    "led_write_ok_count": 0,
+    "led_write_total": 2
+  }
+}

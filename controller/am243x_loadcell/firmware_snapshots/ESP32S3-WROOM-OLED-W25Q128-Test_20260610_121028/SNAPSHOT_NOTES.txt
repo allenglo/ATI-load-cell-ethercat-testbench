@@ -1,0 +1,11 @@
+Firmware snapshot created: 20260610_121028
+Source: C:/CoRoot/#TI#/Fireflaker/ESP32S3-WROOM-OLED-W25Q128-Test
+Included files:
+- src/main.cpp
+- platformio.ini
+
+Context:
+- Non-blocking network task pinned to core 0
+- WiFi watchdog reconnect + force reset policy
+- OLED status page and summary status line updates
+- Heater serial command support and status integration
