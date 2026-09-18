@@ -36,7 +36,7 @@ Observed results:
 - Final state was `mode=IDLE output=IDLE heat=0 cool=0`.
 - The updated GUI was launched on COM33, and its Heat, Cool, Idle, and Auto controls were exercised before returning to IDLE.
 
-After this test, output initialization was moved to the first instructions in `setup()` so both pins are driven LOW as early as possible. That final source rebuild passed. A final reflash could not be completed because the CH343/COM33 USB device was physically absent from Windows at that point; reconnect the bench and rerun the upload command above.
+After this test, output initialization was moved to the first instructions in `setup()` so both pins are driven LOW as early as possible. That final source rebuild passed. A final reflash attempt at 460800 baud lost the CH343 connection during transfer; Windows then reported COM33 as physically absent. The upload speed is now set to 115200 for recovery. Reconnect or power-cycle the bench and perform a complete upload before operating the thermal outputs.
 
 ## Controller and host tools
 
