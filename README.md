@@ -21,7 +21,7 @@ python -m platformio run --target upload --upload-port COM33
 python -m platformio device monitor --port COM33 --baud 115200
 ```
 
-`COM30` is machine-specific. Use `python -m platformio device list` on another laptop.
+`COM33` is machine-specific. Use `python -m platformio device list` on another laptop.
 
 ### Python host tools
 
@@ -32,6 +32,25 @@ python .\host-tools\launchpad_loadcell_live_gui.py
 ```
 
 To start directly on the ESP32 temperature serial view, set `LC_GUI_SERIAL_PORT=COM33` and `LC_GUI_SERIAL_TAB=1` first. The port is machine-specific.
+
+### Thermal control
+
+The ESP32 exposes two mutually exclusive active-high logic outputs:
+
+- `GPIO13`: HEAT request
+- `GPIO14`: COOL request
+- both LOW: IDLE
+
+These are logic signals for external isolated relay/MOSFET/Peltier-driver control inputs. Do not connect a Peltier or other power load directly to an ESP32 GPIO.
+Use external pull-down resistors on both driver inputs so both directions remain off during reset and power-up.
+
+In automatic mode, the GUI sends a target temperature, an idle window, and the selected feedback source (`AVG`, `4C`, or `4F`). For target $T_s$ and window $w$:
+
+- measured temperature below $T_s-w$: HEAT
+- measured temperature from $T_s-w$ through $T_s+w$: IDLE
+- measured temperature above $T_s+w$: COOL
+
+Firmware always switches both outputs LOW before changing direction, waits 500 ms, and never permits HEAT and COOL to be active together. Automatic mode fails to IDLE if its selected temperature input is invalid.
 
 The PoE and Ethernet checks are standalone PowerShell utilities in the same folder.
 

@@ -49,7 +49,9 @@ static const uint8_t LED_RING_BRIGHTNESS = 24;  // 1..31 (datasheet global brigh
 static const uint16_t APA102_CLOCK_HALF_PERIOD_US[] = {500, 100, 20, 5, 2, 0};
 static const uint8_t APA102_CLOCK_MODE_COUNT = sizeof(APA102_CLOCK_HALF_PERIOD_US) / sizeof(APA102_CLOCK_HALF_PERIOD_US[0]);
 
-static const uint8_t PIN_HEATER_RELAY = 13;
+static const uint8_t PIN_HEAT_OUTPUT = 13;
+static const uint8_t PIN_COOL_OUTPUT = 14;
+static const uint32_t THERMAL_SWITCH_DEADTIME_MS = 500;
 
 U8G2_SH1106_128X64_NONAME_F_HW_I2C oled(U8G2_R0, U8X8_PIN_NONE);
 TwoWire ltcBus(1);
@@ -179,7 +181,35 @@ uint32_t lastThingSpeakControlPollMs = 0;
 bool ltc4cPresent = false;
 bool ltc4fPresent = false;
 long ledCommand = 0;
+
+enum class ThermalMode : uint8_t {
+  Idle,
+  ManualHeat,
+  ManualCool,
+  Auto,
+};
+
+enum class ThermalOutput : uint8_t {
+  Idle,
+  Heat,
+  Cool,
+};
+
+enum class ThermalSensor : uint8_t {
+  Sensor4C,
+  Sensor4F,
+  Average,
+};
+
+ThermalMode thermalMode = ThermalMode::Idle;
+ThermalOutput thermalOutput = ThermalOutput::Idle;
+ThermalOutput pendingThermalOutput = ThermalOutput::Idle;
+ThermalSensor thermalSensor = ThermalSensor::Average;
+float thermalTargetC = 25.0f;
+float thermalIdleWindowC = 0.5f;
+uint32_t thermalOffSinceMs = 0;
 bool heaterOn = false;
+bool coolerOn = false;
 
 enum class RingPattern : uint8_t {
   Off = 0,
@@ -211,7 +241,7 @@ uint32_t ringLastModeMs = 0;
 uint8_t ringHue = 0;
 uint16_t ringPos = 0;
 uint8_t ringAutoIndex = 0;
-uint8_t apa102ClockMode = 0;
+uint8_t apa102ClockMode = 2;
 bool clockButtonPressed = false;
 uint32_t lastClockButtonEventMs = 0;
 
@@ -471,7 +501,7 @@ void updateLedRingPattern() {
 struct TsSnapshot {
   float t4c, vcc4c, d1_4c, d2_4c;
   float t4f, vcc4f, d1_4f;
-  bool ok4c, ok4f, heater, accOk;
+  bool ok4c, ok4f, heater, cooler, accOk;
   char accName[12];
 };
 static TsSnapshot        g_tsSnap{};
@@ -481,9 +511,134 @@ static SemaphoreHandle_t g_tsPollSem    = nullptr;
 static volatile int      g_lastTsCode   = 0;
 static volatile uint32_t g_lastTsPushMs = 0;
 
+const char *thermalModeName(ThermalMode mode) {
+  switch (mode) {
+    case ThermalMode::ManualHeat: return "HEAT";
+    case ThermalMode::ManualCool: return "COOL";
+    case ThermalMode::Auto: return "AUTO";
+    default: return "IDLE";
+  }
+}
+
+const char *thermalOutputName(ThermalOutput output) {
+  switch (output) {
+    case ThermalOutput::Heat: return "HEAT";
+    case ThermalOutput::Cool: return "COOL";
+    default: return "IDLE";
+  }
+}
+
+const char *thermalSensorName(ThermalSensor sensor) {
+  switch (sensor) {
+    case ThermalSensor::Sensor4C: return "4C";
+    case ThermalSensor::Sensor4F: return "4F";
+    default: return "AVG";
+  }
+}
+
+bool selectedThermalTemperature(float &temperatureC) {
+  switch (thermalSensor) {
+    case ThermalSensor::Sensor4C:
+      if (!sample4c.ok) return false;
+      temperatureC = sample4c.tempC;
+      return true;
+    case ThermalSensor::Sensor4F:
+      if (!sample4f.ok) return false;
+      temperatureC = sample4f.tempC;
+      return true;
+    case ThermalSensor::Average:
+      if (!sample4c.ok || !sample4f.ok) return false;
+      temperatureC = (sample4c.tempC + sample4f.tempC) * 0.5f;
+      return true;
+  }
+  return false;
+}
+
+void writeThermalOutputs(ThermalOutput output) {
+  // Always de-energize both channels before enabling either direction.
+  digitalWrite(PIN_HEAT_OUTPUT, LOW);
+  digitalWrite(PIN_COOL_OUTPUT, LOW);
+  heaterOn = false;
+  coolerOn = false;
+
+  if (output == ThermalOutput::Heat) {
+    digitalWrite(PIN_HEAT_OUTPUT, HIGH);
+    heaterOn = true;
+  } else if (output == ThermalOutput::Cool) {
+    digitalWrite(PIN_COOL_OUTPUT, HIGH);
+    coolerOn = true;
+  }
+  thermalOutput = output;
+}
+
+void requestThermalOutput(ThermalOutput desired) {
+  uint32_t now = millis();
+
+  if (desired == ThermalOutput::Idle) {
+    pendingThermalOutput = ThermalOutput::Idle;
+    if (thermalOutput != ThermalOutput::Idle) {
+      writeThermalOutputs(ThermalOutput::Idle);
+      thermalOffSinceMs = now;
+      Serial.println("[THERMAL] output=IDLE");
+    }
+    return;
+  }
+
+  if (thermalOutput == desired) {
+    pendingThermalOutput = ThermalOutput::Idle;
+    return;
+  }
+
+  if (thermalOutput != ThermalOutput::Idle) {
+    writeThermalOutputs(ThermalOutput::Idle);
+    thermalOffSinceMs = now;
+    pendingThermalOutput = desired;
+    Serial.printf("[THERMAL] break-before-make pending=%s\n", thermalOutputName(desired));
+    return;
+  }
+
+  if (pendingThermalOutput != desired) {
+    pendingThermalOutput = desired;
+    thermalOffSinceMs = now;
+  }
+
+  if ((now - thermalOffSinceMs) >= THERMAL_SWITCH_DEADTIME_MS) {
+    writeThermalOutputs(desired);
+    pendingThermalOutput = ThermalOutput::Idle;
+    Serial.printf("[THERMAL] output=%s heat=%u cool=%u\n",
+                  thermalOutputName(thermalOutput), heaterOn ? 1 : 0, coolerOn ? 1 : 0);
+  }
+}
+
+void updateThermalControl() {
+  ThermalOutput desired = ThermalOutput::Idle;
+  if (thermalMode == ThermalMode::ManualHeat) {
+    desired = ThermalOutput::Heat;
+  } else if (thermalMode == ThermalMode::ManualCool) {
+    desired = ThermalOutput::Cool;
+  } else if (thermalMode == ThermalMode::Auto) {
+    float temperatureC = 0.0f;
+    if (selectedThermalTemperature(temperatureC)) {
+      if (temperatureC < (thermalTargetC - thermalIdleWindowC)) {
+        desired = ThermalOutput::Heat;
+      } else if (temperatureC > (thermalTargetC + thermalIdleWindowC)) {
+        desired = ThermalOutput::Cool;
+      }
+    }
+  }
+  requestThermalOutput(desired);
+}
+
+void setThermalMode(ThermalMode mode) {
+  thermalMode = mode;
+  updateThermalControl();
+  Serial.printf("[THERMAL] mode=%s target=%.2fC window=%.2fC sensor=%s\n",
+                thermalModeName(thermalMode), thermalTargetC, thermalIdleWindowC,
+                thermalSensorName(thermalSensor));
+}
+
 void setHeater(bool on) {
-  heaterOn = on;
-  digitalWrite(PIN_HEATER_RELAY, on ? HIGH : LOW);
+  setThermalMode(on ? ThermalMode::ManualHeat : ThermalMode::Idle);
   Serial.printf("[HEATER] %s\n", on ? "ON" : "OFF");
 }
 
@@ -499,6 +654,36 @@ void handleSerialCommands() {
           setHeater(true);
         } else if (strcmp(cmdBuf, "HEATER OFF") == 0) {
           setHeater(false);
+        } else if (strcmp(cmdBuf, "THERMAL IDLE") == 0) {
+          setThermalMode(ThermalMode::Idle);
+        } else if (strcmp(cmdBuf, "THERMAL HEAT") == 0) {
+          setThermalMode(ThermalMode::ManualHeat);
+        } else if (strcmp(cmdBuf, "THERMAL COOL") == 0) {
+          setThermalMode(ThermalMode::ManualCool);
+        } else if (strncmp(cmdBuf, "THERMAL AUTO ", 13) == 0) {
+          float targetC = 0.0f;
+          float windowC = 0.0f;
+          char sensorName[4] = {};
+          if (sscanf(cmdBuf + 13, "%f %f %3s", &targetC, &windowC, sensorName) == 3 &&
+              targetC >= -40.0f && targetC <= 120.0f &&
+              windowC >= 0.1f && windowC <= 20.0f) {
+            if (strcmp(sensorName, "4C") == 0) {
+              thermalSensor = ThermalSensor::Sensor4C;
+            } else if (strcmp(sensorName, "4F") == 0) {
+              thermalSensor = ThermalSensor::Sensor4F;
+            } else if (strcmp(sensorName, "AVG") == 0) {
+              thermalSensor = ThermalSensor::Average;
+            } else {
+              Serial.println("[THERMAL] error=invalid_sensor expected=4C|4F|AVG");
+              cmdLen = 0;
+              continue;
+            }
+            thermalTargetC = targetC;
+            thermalIdleWindowC = windowC;
+            setThermalMode(ThermalMode::Auto);
+          } else {
+            Serial.println("[THERMAL] error=invalid_auto expected=THERMAL AUTO <targetC> <windowC> <4C|4F|AVG>");
+          }
         } else if (strcmp(cmdBuf, "RING OFF") == 0) {
           setRingPattern(RingPattern::Off);
         } else if (strcmp(cmdBuf, "RING RAINBOW") == 0) {
@@ -569,7 +754,8 @@ void publishToThingSpeak() {
   g_tsSnap.t4f   = sample4f.tempC;  g_tsSnap.vcc4f = sample4f.vcc;
   g_tsSnap.d1_4f = sample4f.d1mv;
   g_tsSnap.ok4c  = sample4c.ok;     g_tsSnap.ok4f  = sample4f.ok;
-  g_tsSnap.heater = heaterOn;        g_tsSnap.accOk  = accelSample.ok;
+  g_tsSnap.heater = heaterOn;        g_tsSnap.cooler = coolerOn;
+  g_tsSnap.accOk  = accelSample.ok;
   snprintf(g_tsSnap.accName, sizeof(g_tsSnap.accName), "%s", accelName);
   portEXIT_CRITICAL(&g_snapMux);
   if (g_tsPublishSem) xSemaphoreGive(g_tsPublishSem);
@@ -796,11 +982,10 @@ void drawSummaryPage(const LtcSample &a, const LtcSample &b) {
   }
 
   oled.setCursor(0, 52);
-  // WiFi + Heater + last TS code in compact form
+  // WiFi + thermal output in compact form.
   char statusLine[22];
   const char *wf = (WiFi.status() == WL_CONNECTED) ? "W:OK" : "W:--";
-  snprintf(statusLine, sizeof(statusLine), "%s H:%s TS:%d",
-           wf, heaterOn ? "ON" : "OF", (int)g_lastTsCode);
+  snprintf(statusLine, sizeof(statusLine), "%s TC:%s", wf, thermalOutputName(thermalOutput));
   oled.print(statusLine);
   oled.sendBuffer();
 }
@@ -1015,40 +1200,23 @@ void drawStatusPage() {
   oled.clearBuffer();
   oled.setFont(u8g2_font_6x10_tf);
   oled.setCursor(0, 10);
-  oled.print("WiFi / TS Status");
+  oled.print("Thermal Control");
 
-  // WiFi status
   oled.setCursor(0, 22);
-  if (WiFi.status() == WL_CONNECTED) {
-    oled.printf("W:OK  RSSI:%d", (int)WiFi.RSSI());
-  } else {
-    oled.print("W:CONNECTING...");
-  }
-
-  // ThingSpeak: last code + seconds since last ok push
+  oled.printf("Mode:%s Src:%s", thermalModeName(thermalMode), thermalSensorName(thermalSensor));
   oled.setCursor(0, 34);
-  if (g_lastTsPushMs) {
-    uint32_t sec = (millis() - g_lastTsPushMs) / 1000;
-    oled.printf("TS:%d  %lus ago", (int)g_lastTsCode, (unsigned long)sec);
-  } else {
-    oled.printf("TS:%d  no push yet", (int)g_lastTsCode);
-  }
+  oled.printf("Out:%s H:%u C:%u", thermalOutputName(thermalOutput),
+              heaterOn ? 1 : 0, coolerOn ? 1 : 0);
 
-  // Heater
+  float controlTemperatureC = 0.0f;
   oled.setCursor(0, 46);
-  oled.printf("Heater: %s", heaterOn ? "ON" : "OFF");
-
-  // Temp summary
-  oled.setCursor(0, 58);
-  if (sample4c.ok && sample4f.ok) {
-    oled.printf("4C:%.1fC 4F:%.1fC", sample4c.tempC, sample4f.tempC);
-  } else if (sample4c.ok) {
-    oled.printf("4C:%.1fC 4F:MISS", sample4c.tempC);
-  } else if (sample4f.ok) {
-    oled.printf("4C:MISS 4F:%.1fC", sample4f.tempC);
+  if (selectedThermalTemperature(controlTemperatureC)) {
+    oled.printf("Now:%5.1f Set:%5.1f", controlTemperatureC, thermalTargetC);
   } else {
-    oled.print("4C:MISS 4F:MISS");
+    oled.print("Now: SENSOR FAULT");
   }
+  oled.setCursor(0, 58);
+  oled.printf("Idle window:+/-%.1fC", thermalIdleWindowC);
   oled.sendBuffer();
 }
 
@@ -1147,6 +1315,7 @@ bool onSensorRefresh(void *) {
 
   updateLtcSensor(LTC_ADDR_GND_GND, diag4c, sample4c, ltc4cPresent);
   updateLtcSensor(LTC_ADDR_SECONDARY, diag4f, sample4f, ltc4fPresent);
+  updateThermalControl();
 
   if ((now - lastAccelReadMs) >= ACCEL_REFRESH_MS) {
     updateAccelSample();
@@ -1215,6 +1384,14 @@ bool onSensorRefresh(void *) {
                   sampleOrSentinel(sample4f, sample4f.d2mv),
                   sampleOrSentinel(sample4f, sample4f.tempC),
                   sampleOrSentinel(sample4f, sample4f.vcc));
+
+            float controlTemperatureC = 0.0f;
+            bool controlTemperatureOk = selectedThermalTemperature(controlTemperatureC);
+            Serial.printf("[THERMAL] mode=%s output=%s target=%.2fC window=%.2fC sensor=%s temp=%s heat=%u cool=%u\n",
+                    thermalModeName(thermalMode), thermalOutputName(thermalOutput),
+                    thermalTargetC, thermalIdleWindowC, thermalSensorName(thermalSensor),
+                    controlTemperatureOk ? String(controlTemperatureC, 2).c_str() : "FAULT",
+                    heaterOn ? 1 : 0, coolerOn ? 1 : 0);
 
     lastSensorLogMs = now;
   }
@@ -1299,6 +1476,7 @@ static void networkTask(void *) {
         String st = String("4C:") + (snap.ok4c ? "OK" : "MISS")
                   + " 4F:" + (snap.ok4f ? "OK" : "MISS")
                   + " H=" + (snap.heater ? "ON" : "OFF")
+                  + " C=" + (snap.cooler ? "ON" : "OFF")
                   + " A=" + snap.accName;
         ThingSpeak.setStatus(st);
 
@@ -1424,6 +1602,11 @@ void handleClockButton() {
 }
 
 void setup() {
+  pinMode(PIN_HEAT_OUTPUT, OUTPUT);
+  pinMode(PIN_COOL_OUTPUT, OUTPUT);
+  writeThermalOutputs(ThermalOutput::Idle);
+  thermalOffSinceMs = millis();
+
   Serial.begin(115200);
   delay(300);
 
@@ -1452,9 +1635,9 @@ void setup() {
   Serial.printf("ARRAY bus: DATA=%u CLK=%u COUNT=%u\n", PIN_ARRAY_DATA, PIN_ARRAY_CLOCK, LED_RING_COUNT);
   Serial.printf("Touch pin: GPIO%u\n", PIN_TOUCH_NEXT);
   Serial.printf("Clock button: GPIO%u to GND, modes=%u\n", PIN_CLOCK_BUTTON, APA102_CLOCK_MODE_COUNT);
-
-  pinMode(PIN_HEATER_RELAY, OUTPUT);
-  digitalWrite(PIN_HEATER_RELAY, LOW);
+  Serial.printf("Thermal outputs: HEAT=GPIO%u COOL=GPIO%u active-high deadtime=%lums\n",
+                PIN_HEAT_OUTPUT, PIN_COOL_OUTPUT,
+                static_cast<unsigned long>(THERMAL_SWITCH_DEADTIME_MS));
 
   ThingSpeak.begin(thingSpeakClient);
   thingSpeakClient.setTimeout(8000);  // 8 s TCP read timeout (non-blocking guard)

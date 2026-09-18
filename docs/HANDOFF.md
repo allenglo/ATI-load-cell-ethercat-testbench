@@ -8,6 +8,7 @@ The load-cell system is larger than the ESP32-S3 board:
 2. USB-to-Ethernet and PoE hardware provides the network and power path.
 3. Host-side Python tools provide serial monitoring and operator control.
 4. The ESP32-S3 provides the OLED, LTC2990 temperature/voltage monitoring, LED outputs, touch input, and related diagnostics.
+5. The ESP32-S3 provides active-high HEAT (`GPIO13`) and COOL (`GPIO14`) requests to external Peltier power-control hardware. Both low means IDLE.
 
 ## First checks on a new laptop
 
@@ -26,3 +27,4 @@ The load-cell system is larger than the ESP32-S3 board:
 - Generated GUI packages, executables, and large serial-log CSV files are excluded; rebuild the GUI locally from `host-tools/serial_monitor_gui.py` or the controller scripts.
 - Generated webcam-validation reports and captured images are excluded from Git; the source validation scripts remain available in the controller tree.
 - The mirrored external vendor tree is excluded because it contains credentials and third-party artifacts. Retrieve it separately through the approved internal source process when needed.
+- Thermal outputs are control signals only. External hardware must enforce suitable isolation, current handling, flyback protection where applicable, and a safe power-off state.

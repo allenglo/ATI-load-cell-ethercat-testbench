@@ -523,51 +523,43 @@ class EthercatLiveGui:
         ttk.Button(send_fr, text="Clear", command=self._serial_clear).grid(row=0, column=3, padx=4)
         send_fr.columnconfigure(1, weight=1)
 
-        # ── Heater control row ────────────────────────────────────────────────
-        heat_fr = ttk.LabelFrame(tab, text="Heater Relay (Pin 13) & Cycle Control", padding=8)
+        # ── Thermal control center ────────────────────────────────────────────
+        heat_fr = ttk.LabelFrame(tab, text="Thermal Control Center — HEAT GPIO13 / COOL GPIO14 (active high)", padding=8)
         heat_fr.pack(fill="x", padx=4, pady=(0, 2))
 
-        self._heater_state_var = tk.StringVar(value="Unknown")
-        ttk.Label(heat_fr, text="State:").grid(row=0, column=0, sticky="e", padx=4)
-        self._heater_state_lbl = ttk.Label(heat_fr, textvariable=self._heater_state_var, width=10, foreground="gray")
-        self._heater_state_lbl.grid(row=0, column=1, sticky="w", padx=4)
+        self._thermal_mode_var = tk.StringVar(value="IDLE")
+        self._thermal_output_var = tk.StringVar(value="IDLE")
+        self._thermal_temp_var = tk.StringVar(value="--.- C")
+        self._thermal_target_var = tk.StringVar(value="25.0")
+        self._thermal_window_var = tk.StringVar(value="0.5")
+        self._thermal_sensor_var = tk.StringVar(value="AVG")
 
-        self._heater_on_btn = ttk.Button(
-            heat_fr, text="Heater ON",
-            command=lambda: self._heater_set(True),
-            style="Accent.TButton" if "Accent.TButton" in ttk.Style().theme_names() else "TButton",
-        )
-        self._heater_on_btn.grid(row=0, column=2, padx=8)
-        self._heater_off_btn = ttk.Button(heat_fr, text="Heater OFF", command=lambda: self._heater_set(False))
-        self._heater_off_btn.grid(row=0, column=3, padx=4)
-        ttk.Label(heat_fr, text="Hold at (C):", foreground="#a6adc8", font=("Consolas", 8)).grid(
-            row=0, column=4, sticky="e", padx=(10, 4)
-        )
-        self._heater_hold_temp_var = tk.StringVar(value="55")
-        ttk.Entry(heat_fr, textvariable=self._heater_hold_temp_var, width=8, font=("Consolas", 9)).grid(
-            row=0, column=5, sticky="w", padx=4
-        )
-        self._heater_hold_btn = ttk.Button(heat_fr, text="Start Hold", command=self._heater_hold_toggle)
-        self._heater_hold_btn.grid(row=0, column=6, padx=8)
-        self._heater_hold_active = False
+        ttk.Label(heat_fr, text="Temperature:").grid(row=0, column=0, sticky="e", padx=4)
+        ttk.Label(heat_fr, textvariable=self._thermal_temp_var, width=10, font=("Consolas", 10, "bold")).grid(row=0, column=1, sticky="w", padx=4)
+        ttk.Label(heat_fr, text="Mode:").grid(row=0, column=2, sticky="e", padx=4)
+        self._thermal_mode_lbl = ttk.Label(heat_fr, textvariable=self._thermal_mode_var, width=8, foreground="#a6adc8")
+        self._thermal_mode_lbl.grid(row=0, column=3, sticky="w", padx=4)
+        ttk.Label(heat_fr, text="Output:").grid(row=0, column=4, sticky="e", padx=4)
+        self._thermal_output_lbl = ttk.Label(heat_fr, textvariable=self._thermal_output_var, width=8, foreground="#89dceb")
+        self._thermal_output_lbl.grid(row=0, column=5, sticky="w", padx=4)
 
-        # Cycle control row
-        ttk.Label(heat_fr, text="Cycle ON (sec):", foreground="#a6adc8", font=("Consolas", 8)).grid(row=1, column=0, sticky="e", padx=4, pady=(8, 0))
-        self._heater_on_duration_var = tk.StringVar(value="5000")
-        ttk.Entry(heat_fr, textvariable=self._heater_on_duration_var, width=10, font=("Consolas", 9)).grid(row=1, column=1, sticky="w", padx=4, pady=(8, 0))
+        ttk.Label(heat_fr, text="Target (C):").grid(row=1, column=0, sticky="e", padx=4, pady=(8, 0))
+        ttk.Entry(heat_fr, textvariable=self._thermal_target_var, width=8).grid(row=1, column=1, sticky="w", padx=4, pady=(8, 0))
+        ttk.Label(heat_fr, text="Idle window +/- (C):").grid(row=1, column=2, sticky="e", padx=4, pady=(8, 0))
+        ttk.Entry(heat_fr, textvariable=self._thermal_window_var, width=8).grid(row=1, column=3, sticky="w", padx=4, pady=(8, 0))
+        ttk.Label(heat_fr, text="Sensor:").grid(row=1, column=4, sticky="e", padx=4, pady=(8, 0))
+        ttk.Combobox(heat_fr, textvariable=self._thermal_sensor_var, values=["AVG", "4C", "4F"], width=6, state="readonly").grid(row=1, column=5, sticky="w", padx=4, pady=(8, 0))
+        self._thermal_auto_btn = ttk.Button(heat_fr, text="Start Auto", command=self._thermal_start_auto)
+        self._thermal_auto_btn.grid(row=1, column=6, padx=8, pady=(8, 0))
 
-        ttk.Label(heat_fr, text="Cycle OFF (sec):", foreground="#a6adc8", font=("Consolas", 8)).grid(row=1, column=2, sticky="e", padx=4, pady=(8, 0))
-        self._heater_off_duration_var = tk.StringVar(value="10000")
-        ttk.Entry(heat_fr, textvariable=self._heater_off_duration_var, width=10, font=("Consolas", 9)).grid(row=1, column=3, sticky="w", padx=4, pady=(8, 0))
-
-        self._heater_cycle_btn = ttk.Button(heat_fr, text="Start Cycle", command=self._heater_start_cycle)
-        self._heater_cycle_btn.grid(row=1, column=4, padx=8, pady=(8, 0))
-        self._heater_cycle_running = False
-        self._heater_cycle_stop_evt = threading.Event()
-
-        ttk.Label(heat_fr, text="Sends 'HEATER ON' / 'HEATER OFF' over serial", foreground="#888888", font=("Consolas", 7)).grid(
-            row=2, column=0, columnspan=5, sticky="w", padx=4, pady=(4, 0)
-        )
+        ttk.Button(heat_fr, text="Heat", command=lambda: self._thermal_manual("HEAT")).grid(row=2, column=1, padx=4, pady=(8, 0))
+        ttk.Button(heat_fr, text="Idle", command=self._thermal_idle).grid(row=2, column=3, padx=4, pady=(8, 0))
+        ttk.Button(heat_fr, text="Cool", command=lambda: self._thermal_manual("COOL")).grid(row=2, column=5, padx=4, pady=(8, 0))
+        ttk.Label(
+            heat_fr,
+            text="AUTO: below target-window = HEAT; inside window = IDLE; above target+window = COOL",
+            foreground="#888888", font=("Consolas", 7),
+        ).grid(row=3, column=0, columnspan=7, sticky="w", padx=4, pady=(5, 0))
 
         # ── Terminal display ──────────────────────────────────────────────────
         self._ser_text = scrolledtext.ScrolledText(tab, wrap="none", font=("Consolas", 10), background="#1e1e1e", foreground="#d4d4d4", maxundo=0)
@@ -700,90 +692,36 @@ class EthercatLiveGui:
         except Exception as exc:
             self._ser_append("err", f"[send error: {exc}]\n")
 
-    def _heater_set(self, on: bool) -> None:
-        cmd = "HEATER ON" if on else "HEATER OFF"
-        self._serial_send_raw(cmd)
-        self._heater_state_var.set("ON" if on else "OFF")
-        self._heater_state_lbl.configure(foreground="#f38ba8" if on else "#89dceb")
+    def _thermal_idle(self) -> None:
+        self._serial_send_raw("THERMAL IDLE")
+        self._thermal_mode_var.set("IDLE")
+        self._thermal_auto_btn.configure(text="Start Auto")
 
-    def _heater_hold_toggle(self) -> None:
-        """Toggle firmware-side heater hold control at a target temperature."""
-        if self._heater_hold_active:
-            self._serial_send_raw("HEATER HOLD OFF")
-            self._heater_hold_active = False
-            self._heater_hold_btn.configure(text="Start Hold")
-            self._heater_state_var.set("OFF")
-            self._heater_state_lbl.configure(foreground="#89dceb")
-            return
+    def _thermal_manual(self, output: str) -> None:
+        self._serial_send_raw(f"THERMAL {output}")
+        self._thermal_mode_var.set(output)
+        self._thermal_auto_btn.configure(text="Start Auto")
 
+    def _thermal_start_auto(self) -> None:
         try:
-            hold_c = float(self._heater_hold_temp_var.get().strip())
-            if hold_c < 0.0 or hold_c > 100.0:
-                self._ser_append("err", "[hold temp must be between 0 and 100 C]\n")
-                return
+            target_c = float(self._thermal_target_var.get().strip())
+            window_c = float(self._thermal_window_var.get().strip())
         except ValueError:
-            self._ser_append("err", "[invalid hold temperature]\n")
+            self._ser_append("err", "[thermal target and idle window must be numbers]\n")
             return
-
-        # Hold control supersedes cycle control.
-        if self._heater_cycle_running:
-            self._heater_cycle_stop_evt.set()
-            self._heater_cycle_running = False
-            self._heater_cycle_btn.configure(text="Start Cycle")
-
-        self._serial_send_raw(f"HEATER HOLD {hold_c:.1f}")
-        self._heater_hold_active = True
-        self._heater_hold_btn.configure(text="Stop Hold")
-        self._heater_state_var.set(f"HOLD {hold_c:.1f}C")
-        self._heater_state_lbl.configure(foreground="#f9e2af")
-
-    def _heater_start_cycle(self) -> None:
-        """Start heater on/off cycle with user-specified durations."""
-        if self._heater_cycle_running:
-            self._heater_cycle_stop_evt.set()
-            self._heater_cycle_running = False
-            self._heater_cycle_btn.configure(text="Start Cycle")
-            self._ser_append("info", "[heater cycle stopped]\n")
+        if not -40.0 <= target_c <= 120.0:
+            self._ser_append("err", "[thermal target must be between -40 and 120 C]\n")
             return
-        try:
-            on_dur = float(self._heater_on_duration_var.get())
-            off_dur = float(self._heater_off_duration_var.get())
-            if on_dur <= 0 or off_dur <= 0:
-                self._ser_append("err", "[invalid durations: must be > 0]\n")
-                return
-        except ValueError:
-            self._ser_append("err", "[invalid heater cycle durations]\n")
+        if not 0.1 <= window_c <= 20.0:
+            self._ser_append("err", "[idle window must be between 0.1 and 20 C]\n")
             return
-
-        # Cycle control supersedes hold control.
-        if self._heater_hold_active:
-            self._serial_send_raw("HEATER HOLD OFF")
-            self._heater_hold_active = False
-            self._heater_hold_btn.configure(text="Start Hold")
-
-        self._heater_cycle_stop_evt.clear()
-        self._heater_cycle_running = True
-        self._heater_cycle_btn.configure(text="Stop Cycle")
-        threading.Thread(target=self._heater_cycle_thread, args=(on_dur, off_dur), daemon=True).start()
-
-    def _heater_cycle_thread(self, on_dur: float, off_dur: float) -> None:
-        """Background thread for heater on/off cycling."""
-        self._ser_append("info", f"[heater cycle: ON {on_dur}s, OFF {off_dur}s]\n")
-        try:
-            while not self._heater_cycle_stop_evt.is_set():
-                self._heater_set(True)
-                for _ in range(int(on_dur * 10)):
-                    if self._heater_cycle_stop_evt.is_set():
-                        return
-                    time.sleep(0.1)
-                self._heater_set(False)
-                for _ in range(int(off_dur * 10)):
-                    if self._heater_cycle_stop_evt.is_set():
-                        return
-                    time.sleep(0.1)
-        finally:
-            self._heater_cycle_running = False
-            self._heater_cycle_btn.configure(text="Start Cycle")
+        sensor = self._thermal_sensor_var.get().strip().upper()
+        if sensor not in {"AVG", "4C", "4F"}:
+            self._ser_append("err", "[thermal sensor must be AVG, 4C, or 4F]\n")
+            return
+        self._serial_send_raw(f"THERMAL AUTO {target_c:.2f} {window_c:.2f} {sensor}")
+        self._thermal_mode_var.set("AUTO")
+        self._thermal_auto_btn.configure(text="Update Auto")
 
     def _serial_clear(self) -> None:
         if self._ser_text is None:
@@ -1096,12 +1034,23 @@ class EthercatLiveGui:
         if _s:
             vals["MOTION"] = 1.0 if _s.group(1) != "NONE" else 0.0
 
-        # Sync heater state label from firmware echo.
-        _h = re.match(r"\[HEATER\]\s+(ON|OFF)", line)
-        if _h and hasattr(self, "_heater_state_var"):
-            _state = _h.group(1)
-            self._heater_state_var.set(_state)
-            self._heater_state_lbl.configure(foreground="#f38ba8" if _state == "ON" else "#89dceb")
+        thermal = re.match(
+            r"\[THERMAL\]\s+mode=(\w+)\s+output=(\w+)\s+target=([\d.-]+)C\s+"
+            r"window=([\d.-]+)C\s+sensor=(4C|4F|AVG)\s+temp=([^\s]+)\s+heat=([01])\s+cool=([01])",
+            line,
+        )
+        if thermal and hasattr(self, "_thermal_mode_var"):
+            mode, output, target, window, sensor, temperature, _heat, _cool = thermal.groups()
+            self._thermal_mode_var.set(mode)
+            self._thermal_output_var.set(output)
+            self._thermal_target_var.set(target)
+            self._thermal_window_var.set(window)
+            self._thermal_sensor_var.set(sensor)
+            self._thermal_temp_var.set("SENSOR FAULT" if temperature == "FAULT" else f"{temperature} C")
+            output_colors = {"HEAT": "#f38ba8", "COOL": "#89b4fa", "IDLE": "#89dceb"}
+            self._thermal_output_lbl.configure(foreground=output_colors.get(output, "#a6adc8"))
+            self._thermal_mode_lbl.configure(foreground="#f9e2af" if mode == "AUTO" else "#a6adc8")
+            self._thermal_auto_btn.configure(text="Update Auto" if mode == "AUTO" else "Start Auto")
 
         if math.isfinite(self._esp32_t4c_last):
             vals["T4C"] = self._esp32_t4c_last

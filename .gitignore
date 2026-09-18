@@ -15,6 +15,8 @@ downloads/
 secrets.*
 .env
 .env.*
+.launchpad_loadcell_live_gui_adapter.txt
+.launchpad_loadcell_live_gui_port.txt
 controller/am243x_loadcell/external/INR_DEV-main/
 **/scripts/build/
 **/scripts/dist/
