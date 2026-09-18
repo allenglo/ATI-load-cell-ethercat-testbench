@@ -665,8 +665,8 @@ void handleSerialCommands() {
           float windowC = 0.0f;
           char sensorName[4] = {};
           if (sscanf(cmdBuf + 13, "%f %f %3s", &targetC, &windowC, sensorName) == 3 &&
-              targetC >= -40.0f && targetC <= 120.0f &&
-              windowC >= 0.1f && windowC <= 20.0f) {
+              targetC >= -100.0f && targetC <= 200.0f &&
+              windowC >= 0.0f && windowC <= 20.0f) {
             if (strcmp(sensorName, "4C") == 0) {
               thermalSensor = ThermalSensor::Sensor4C;
             } else if (strcmp(sensorName, "4F") == 0) {
@@ -1602,11 +1602,6 @@ void handleClockButton() {
 }
 
 void setup() {
-  pinMode(PIN_HEAT_OUTPUT, OUTPUT);
-  pinMode(PIN_COOL_OUTPUT, OUTPUT);
-  writeThermalOutputs(ThermalOutput::Idle);
-  thermalOffSinceMs = millis();
-
   Serial.begin(115200);
   delay(300);
 
@@ -1638,6 +1633,11 @@ void setup() {
   Serial.printf("Thermal outputs: HEAT=GPIO%u COOL=GPIO%u active-high deadtime=%lums\n",
                 PIN_HEAT_OUTPUT, PIN_COOL_OUTPUT,
                 static_cast<unsigned long>(THERMAL_SWITCH_DEADTIME_MS));
+
+  pinMode(PIN_HEAT_OUTPUT, OUTPUT);
+  pinMode(PIN_COOL_OUTPUT, OUTPUT);
+  writeThermalOutputs(ThermalOutput::Idle);
+  thermalOffSinceMs = millis();
 
   ThingSpeak.begin(thingSpeakClient);
   thingSpeakClient.setTimeout(8000);  // 8 s TCP read timeout (non-blocking guard)

@@ -533,6 +533,7 @@ class EthercatLiveGui:
         self._thermal_target_var = tk.StringVar(value="25.0")
         self._thermal_window_var = tk.StringVar(value="0.5")
         self._thermal_sensor_var = tk.StringVar(value="AVG")
+        self._thermal_apply_job: str | None = None
 
         ttk.Label(heat_fr, text="Temperature:").grid(row=0, column=0, sticky="e", padx=4)
         ttk.Label(heat_fr, textvariable=self._thermal_temp_var, width=10, font=("Consolas", 10, "bold")).grid(row=0, column=1, sticky="w", padx=4)
@@ -544,13 +545,21 @@ class EthercatLiveGui:
         self._thermal_output_lbl.grid(row=0, column=5, sticky="w", padx=4)
 
         ttk.Label(heat_fr, text="Target (C):").grid(row=1, column=0, sticky="e", padx=4, pady=(8, 0))
-        ttk.Entry(heat_fr, textvariable=self._thermal_target_var, width=8).grid(row=1, column=1, sticky="w", padx=4, pady=(8, 0))
+        target_entry = ttk.Entry(heat_fr, textvariable=self._thermal_target_var, width=8)
+        target_entry.grid(row=1, column=1, sticky="w", padx=4, pady=(8, 0))
         ttk.Label(heat_fr, text="Idle window +/- (C):").grid(row=1, column=2, sticky="e", padx=4, pady=(8, 0))
-        ttk.Entry(heat_fr, textvariable=self._thermal_window_var, width=8).grid(row=1, column=3, sticky="w", padx=4, pady=(8, 0))
+        window_entry = ttk.Entry(heat_fr, textvariable=self._thermal_window_var, width=8)
+        window_entry.grid(row=1, column=3, sticky="w", padx=4, pady=(8, 0))
         ttk.Label(heat_fr, text="Sensor:").grid(row=1, column=4, sticky="e", padx=4, pady=(8, 0))
-        ttk.Combobox(heat_fr, textvariable=self._thermal_sensor_var, values=["AVG", "4C", "4F"], width=6, state="readonly").grid(row=1, column=5, sticky="w", padx=4, pady=(8, 0))
-        self._thermal_auto_btn = ttk.Button(heat_fr, text="Start Auto", command=self._thermal_start_auto)
+        sensor_combo = ttk.Combobox(heat_fr, textvariable=self._thermal_sensor_var, values=["AVG", "4C", "4F"], width=6, state="readonly")
+        sensor_combo.grid(row=1, column=5, sticky="w", padx=4, pady=(8, 0))
+        self._thermal_auto_btn = ttk.Button(heat_fr, text="Start / Apply Auto", command=self._thermal_start_auto)
         self._thermal_auto_btn.grid(row=1, column=6, padx=8, pady=(8, 0))
+        target_entry.bind("<Return>", lambda _event: self._thermal_start_auto())
+        window_entry.bind("<Return>", lambda _event: self._thermal_start_auto())
+        self._thermal_target_var.trace_add("write", self._thermal_setting_changed)
+        self._thermal_window_var.trace_add("write", self._thermal_setting_changed)
+        self._thermal_sensor_var.trace_add("write", self._thermal_setting_changed)
 
         ttk.Button(heat_fr, text="Heat", command=lambda: self._thermal_manual("HEAT")).grid(row=2, column=1, padx=4, pady=(8, 0))
         ttk.Button(heat_fr, text="Idle", command=self._thermal_idle).grid(row=2, column=3, padx=4, pady=(8, 0))
@@ -695,12 +704,23 @@ class EthercatLiveGui:
     def _thermal_idle(self) -> None:
         self._serial_send_raw("THERMAL IDLE")
         self._thermal_mode_var.set("IDLE")
-        self._thermal_auto_btn.configure(text="Start Auto")
+        self._thermal_auto_btn.configure(text="Start / Apply Auto")
 
     def _thermal_manual(self, output: str) -> None:
         self._serial_send_raw(f"THERMAL {output}")
         self._thermal_mode_var.set(output)
-        self._thermal_auto_btn.configure(text="Start Auto")
+        self._thermal_auto_btn.configure(text="Start / Apply Auto")
+
+    def _thermal_setting_changed(self, *_args: object) -> None:
+        if self._thermal_apply_job is not None:
+            self.root.after_cancel(self._thermal_apply_job)
+            self._thermal_apply_job = None
+        if self._thermal_mode_var.get() == "AUTO":
+            self._thermal_apply_job = self.root.after(600, self._thermal_apply_changed_settings)
+
+    def _thermal_apply_changed_settings(self) -> None:
+        self._thermal_apply_job = None
+        self._thermal_start_auto()
 
     def _thermal_start_auto(self) -> None:
         try:
@@ -709,11 +729,11 @@ class EthercatLiveGui:
         except ValueError:
             self._ser_append("err", "[thermal target and idle window must be numbers]\n")
             return
-        if not -40.0 <= target_c <= 120.0:
-            self._ser_append("err", "[thermal target must be between -40 and 120 C]\n")
+        if not -100.0 <= target_c <= 200.0:
+            self._ser_append("err", "[thermal target must be between -100 and 200 C]\n")
             return
-        if not 0.1 <= window_c <= 20.0:
-            self._ser_append("err", "[idle window must be between 0.1 and 20 C]\n")
+        if not 0.0 <= window_c <= 20.0:
+            self._ser_append("err", "[idle window must be between 0 and 20 C]\n")
             return
         sensor = self._thermal_sensor_var.get().strip().upper()
         if sensor not in {"AVG", "4C", "4F"}:
@@ -721,7 +741,7 @@ class EthercatLiveGui:
             return
         self._serial_send_raw(f"THERMAL AUTO {target_c:.2f} {window_c:.2f} {sensor}")
         self._thermal_mode_var.set("AUTO")
-        self._thermal_auto_btn.configure(text="Update Auto")
+        self._thermal_auto_btn.configure(text="Apply Auto")
 
     def _serial_clear(self) -> None:
         if self._ser_text is None:
@@ -1043,14 +1063,11 @@ class EthercatLiveGui:
             mode, output, target, window, sensor, temperature, _heat, _cool = thermal.groups()
             self._thermal_mode_var.set(mode)
             self._thermal_output_var.set(output)
-            self._thermal_target_var.set(target)
-            self._thermal_window_var.set(window)
-            self._thermal_sensor_var.set(sensor)
             self._thermal_temp_var.set("SENSOR FAULT" if temperature == "FAULT" else f"{temperature} C")
             output_colors = {"HEAT": "#f38ba8", "COOL": "#89b4fa", "IDLE": "#89dceb"}
             self._thermal_output_lbl.configure(foreground=output_colors.get(output, "#a6adc8"))
             self._thermal_mode_lbl.configure(foreground="#f9e2af" if mode == "AUTO" else "#a6adc8")
-            self._thermal_auto_btn.configure(text="Update Auto" if mode == "AUTO" else "Start Auto")
+            self._thermal_auto_btn.configure(text="Apply Auto" if mode == "AUTO" else "Start / Apply Auto")
 
         if math.isfinite(self._esp32_t4c_last):
             vals["T4C"] = self._esp32_t4c_last

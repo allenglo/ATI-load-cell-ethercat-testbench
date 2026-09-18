@@ -33,6 +33,8 @@ python .\host-tools\launchpad_loadcell_live_gui.py
 
 To start directly on the ESP32 temperature serial view, set `LC_GUI_SERIAL_PORT=COM33` and `LC_GUI_SERIAL_TAB=1` first. The port is machine-specific.
 
+While Auto mode is active, changing the target, idle window, or sensor automatically sends the new settings after 600 ms. Press Enter or click **Apply Auto** to send immediately. Target accepts -100 C through 200 C; idle window accepts 0 C through 20 C.
+
 ### Thermal control
 
 The ESP32 exposes two mutually exclusive active-high logic outputs:

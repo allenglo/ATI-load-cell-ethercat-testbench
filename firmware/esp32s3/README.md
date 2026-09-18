@@ -94,6 +94,8 @@ THERMAL COOL
 THERMAL AUTO <target_C> <idle_window_C> <4C|4F|AVG>
 ```
 
+Accepted ranges are -100 C through 200 C for the target and 0 C through 20 C for the idle window.
+
 Example:
 
 ```text
