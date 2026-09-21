@@ -35,6 +35,8 @@ To start directly on the ESP32 temperature serial view, set `LC_GUI_SERIAL_PORT=
 
 While Auto mode is active, changing the target, idle window, or sensor automatically sends the new settings after 600 ms. Press Enter or click **Apply Auto** to send immediately. Target accepts -100 C through 200 C; idle window accepts 0 C through 20 C.
 
+Thermal Cycle alternates between configured high and low target temperatures. Each phase lasts its configured hold time in seconds. Timing begins as soon as the goal is changed; the cycle does not wait for measured temperature to reach the goal. Stopping the cycle retains the current Auto goal, while Heat, Cool, or Idle stops the scheduler before applying the manual command.
+
 ### Thermal control
 
 The ESP32 exposes two mutually exclusive active-high logic outputs:

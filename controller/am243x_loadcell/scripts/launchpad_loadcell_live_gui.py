@@ -534,6 +534,14 @@ class EthercatLiveGui:
         self._thermal_window_var = tk.StringVar(value="0.5")
         self._thermal_sensor_var = tk.StringVar(value="AVG")
         self._thermal_apply_job: str | None = None
+        self._thermal_programmatic_setting = False
+        self._thermal_cycle_active = False
+        self._thermal_cycle_job: str | None = None
+        self._thermal_cycle_high_var = tk.StringVar(value="55.0")
+        self._thermal_cycle_high_hold_var = tk.StringVar(value="300")
+        self._thermal_cycle_low_var = tk.StringVar(value="10.0")
+        self._thermal_cycle_low_hold_var = tk.StringVar(value="300")
+        self._thermal_cycle_status_var = tk.StringVar(value="Stopped")
 
         ttk.Label(heat_fr, text="Temperature:").grid(row=0, column=0, sticky="e", padx=4)
         ttk.Label(heat_fr, textvariable=self._thermal_temp_var, width=10, font=("Consolas", 10, "bold")).grid(row=0, column=1, sticky="w", padx=4)
@@ -564,11 +572,25 @@ class EthercatLiveGui:
         ttk.Button(heat_fr, text="Heat", command=lambda: self._thermal_manual("HEAT")).grid(row=2, column=1, padx=4, pady=(8, 0))
         ttk.Button(heat_fr, text="Idle", command=self._thermal_idle).grid(row=2, column=3, padx=4, pady=(8, 0))
         ttk.Button(heat_fr, text="Cool", command=lambda: self._thermal_manual("COOL")).grid(row=2, column=5, padx=4, pady=(8, 0))
+
+        ttk.Label(heat_fr, text="Cycle high (C):").grid(row=3, column=0, sticky="e", padx=4, pady=(8, 0))
+        ttk.Entry(heat_fr, textvariable=self._thermal_cycle_high_var, width=8).grid(row=3, column=1, sticky="w", padx=4, pady=(8, 0))
+        ttk.Label(heat_fr, text="High hold (s):").grid(row=3, column=2, sticky="e", padx=4, pady=(8, 0))
+        ttk.Entry(heat_fr, textvariable=self._thermal_cycle_high_hold_var, width=8).grid(row=3, column=3, sticky="w", padx=4, pady=(8, 0))
+        ttk.Label(heat_fr, text="Cycle low (C):").grid(row=3, column=4, sticky="e", padx=4, pady=(8, 0))
+        ttk.Entry(heat_fr, textvariable=self._thermal_cycle_low_var, width=8).grid(row=3, column=5, sticky="w", padx=4, pady=(8, 0))
+
+        ttk.Label(heat_fr, text="Low hold (s):").grid(row=4, column=0, sticky="e", padx=4, pady=(8, 0))
+        ttk.Entry(heat_fr, textvariable=self._thermal_cycle_low_hold_var, width=8).grid(row=4, column=1, sticky="w", padx=4, pady=(8, 0))
+        self._thermal_cycle_btn = ttk.Button(heat_fr, text="Start Cycle", command=self._thermal_cycle_toggle)
+        self._thermal_cycle_btn.grid(row=4, column=3, padx=4, pady=(8, 0))
+        ttk.Label(heat_fr, text="Phase:").grid(row=4, column=4, sticky="e", padx=4, pady=(8, 0))
+        ttk.Label(heat_fr, textvariable=self._thermal_cycle_status_var, width=22).grid(row=4, column=5, columnspan=2, sticky="w", padx=4, pady=(8, 0))
         ttk.Label(
             heat_fr,
-            text="AUTO: below target-window = HEAT; inside window = IDLE; above target+window = COOL",
+            text="Cycle changes the Auto goal on time only; it does not wait for measured temperature.",
             foreground="#888888", font=("Consolas", 7),
-        ).grid(row=3, column=0, columnspan=7, sticky="w", padx=4, pady=(5, 0))
+        ).grid(row=5, column=0, columnspan=7, sticky="w", padx=4, pady=(5, 0))
 
         # ── Terminal display ──────────────────────────────────────────────────
         self._ser_text = scrolledtext.ScrolledText(tab, wrap="none", font=("Consolas", 10), background="#1e1e1e", foreground="#d4d4d4", maxundo=0)
@@ -702,16 +724,20 @@ class EthercatLiveGui:
             self._ser_append("err", f"[send error: {exc}]\n")
 
     def _thermal_idle(self) -> None:
+        self._thermal_stop_cycle(log=False)
         self._serial_send_raw("THERMAL IDLE")
         self._thermal_mode_var.set("IDLE")
         self._thermal_auto_btn.configure(text="Start / Apply Auto")
 
     def _thermal_manual(self, output: str) -> None:
+        self._thermal_stop_cycle(log=False)
         self._serial_send_raw(f"THERMAL {output}")
         self._thermal_mode_var.set(output)
         self._thermal_auto_btn.configure(text="Start / Apply Auto")
 
     def _thermal_setting_changed(self, *_args: object) -> None:
+        if self._thermal_programmatic_setting:
+            return
         if self._thermal_apply_job is not None:
             self.root.after_cancel(self._thermal_apply_job)
             self._thermal_apply_job = None
@@ -722,7 +748,9 @@ class EthercatLiveGui:
         self._thermal_apply_job = None
         self._thermal_start_auto()
 
-    def _thermal_start_auto(self) -> None:
+    def _thermal_start_auto(self, from_cycle: bool = False) -> None:
+        if not from_cycle:
+            self._thermal_stop_cycle(log=False)
         try:
             target_c = float(self._thermal_target_var.get().strip())
             window_c = float(self._thermal_window_var.get().strip())
@@ -742,6 +770,65 @@ class EthercatLiveGui:
         self._serial_send_raw(f"THERMAL AUTO {target_c:.2f} {window_c:.2f} {sensor}")
         self._thermal_mode_var.set("AUTO")
         self._thermal_auto_btn.configure(text="Apply Auto")
+
+    def _thermal_cycle_toggle(self) -> None:
+        if self._thermal_cycle_active:
+            self._thermal_stop_cycle()
+            return
+        try:
+            high_c = float(self._thermal_cycle_high_var.get().strip())
+            low_c = float(self._thermal_cycle_low_var.get().strip())
+            high_hold_s = float(self._thermal_cycle_high_hold_var.get().strip())
+            low_hold_s = float(self._thermal_cycle_low_hold_var.get().strip())
+        except ValueError:
+            self._ser_append("err", "[cycle temperatures and hold times must be numbers]\n")
+            return
+        if not -100.0 <= high_c <= 200.0 or not -100.0 <= low_c <= 200.0:
+            self._ser_append("err", "[cycle temperatures must be between -100 and 200 C]\n")
+            return
+        if high_hold_s <= 0.0 or low_hold_s <= 0.0:
+            self._ser_append("err", "[cycle hold times must be greater than 0 seconds]\n")
+            return
+        self._thermal_cycle_active = True
+        self._thermal_cycle_btn.configure(text="Stop Cycle")
+        self._ser_append("rx", f"[thermal cycle started: {high_c:g} C/{high_hold_s:g}s, {low_c:g} C/{low_hold_s:g}s]\n")
+        self._thermal_cycle_apply_phase("HIGH")
+
+    def _thermal_cycle_apply_phase(self, phase: str) -> None:
+        if not self._thermal_cycle_active:
+            return
+        if phase == "HIGH":
+            target_c = float(self._thermal_cycle_high_var.get().strip())
+            hold_s = float(self._thermal_cycle_high_hold_var.get().strip())
+            next_phase = "LOW"
+        else:
+            target_c = float(self._thermal_cycle_low_var.get().strip())
+            hold_s = float(self._thermal_cycle_low_hold_var.get().strip())
+            next_phase = "HIGH"
+        self._thermal_programmatic_setting = True
+        try:
+            self._thermal_target_var.set(f"{target_c:g}")
+        finally:
+            self._thermal_programmatic_setting = False
+        self._thermal_start_auto(from_cycle=True)
+        self._thermal_cycle_status_var.set(f"{phase}: {target_c:g} C, {hold_s:g}s")
+        self._ser_append("rx", f"[thermal cycle phase {phase}: goal={target_c:g} C hold={hold_s:g}s]\n")
+        self._thermal_cycle_job = self.root.after(
+            max(1, int(hold_s * 1000)),
+            lambda: self._thermal_cycle_apply_phase(next_phase),
+        )
+
+    def _thermal_stop_cycle(self, log: bool = True) -> None:
+        if self._thermal_cycle_job is not None:
+            self.root.after_cancel(self._thermal_cycle_job)
+            self._thermal_cycle_job = None
+        was_active = self._thermal_cycle_active
+        self._thermal_cycle_active = False
+        if hasattr(self, "_thermal_cycle_btn"):
+            self._thermal_cycle_btn.configure(text="Start Cycle")
+            self._thermal_cycle_status_var.set("Stopped")
+        if log and was_active:
+            self._ser_append("rx", "[thermal cycle stopped; current Auto goal retained]\n")
 
     def _serial_clear(self) -> None:
         if self._ser_text is None:
@@ -2046,6 +2133,7 @@ class EthercatLiveGui:
                         pass
 
     def on_close(self) -> None:
+        self._thermal_stop_cycle(log=False)
         self.stop_evt.set()
         self.disconnect("Window closed")
         if _SERIAL_AVAILABLE:

@@ -104,6 +104,8 @@ THERMAL AUTO 25.0 0.5 AVG
 
 This heats below 24.5 C, idles from 24.5 C through 25.5 C, and cools above 25.5 C. Automatic control falls back to IDLE if the selected sensor data is invalid. Legacy `HEATER ON` and `HEATER OFF` commands remain supported as manual HEAT and IDLE.
 
+The Python GUI can schedule alternating high and low Auto goals with independent hold times. This scheduler runs on the host and sends ordinary `THERMAL AUTO` commands; it changes goals strictly by elapsed time and does not wait for the sensor to reach either goal.
+
 The OLED status page shows mode, sensor source, active output, HEAT/COOL bits, current control temperature, target, and idle window.
 
 ## Build
