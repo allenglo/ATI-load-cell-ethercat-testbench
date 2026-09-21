@@ -37,6 +37,8 @@ While Auto mode is active, changing the target, idle window, or sensor automatic
 
 Thermal Cycle alternates between configured high and low target temperatures. Each phase lasts its configured hold time in seconds. Timing begins as soon as the goal is changed; the cycle does not wait for measured temperature to reach the goal. Cycle settings are snapshotted when **Start Cycle** is pressed, and the phase bar shows the active goal and countdown. Hold and Cycle are mutually exclusive. Stopping Cycle returns the host to Hold mode while retaining the current Auto goal; Heat, Cool, or Idle also stops the scheduler before applying the manual command.
 
+The thermal control section includes a live temperature-versus-time graph. Dotted lines show the target and idle-window boundaries. A colored strip below the graph shows HEAT (red), IDLE (gray), and COOL (blue) output history.
+
 ### Thermal control
 
 The ESP32 exposes two mutually exclusive active-high logic outputs:

@@ -234,6 +234,9 @@ class EthercatLiveGui:
         self._ser_tvoc_history: deque[float] = deque(maxlen=GRAPH_HISTORY)
         self._ser_tdelta_history: deque[float] = deque(maxlen=GRAPH_HISTORY)
         self._ser_motion_history: deque[float] = deque(maxlen=GRAPH_HISTORY)
+        self._thermal_state_ts: deque[float] = deque(maxlen=GRAPH_HISTORY)
+        self._thermal_state_history: deque[str] = deque(maxlen=GRAPH_HISTORY)
+        self._thermal_plot_last_draw = 0.0
         self._esp32_t4c_last = math.nan
         self._esp32_t4f_last = math.nan
         self._connect_ts: float = 0.0  # wall time of last connect, for relative x-axis
@@ -524,8 +527,20 @@ class EthercatLiveGui:
         send_fr.columnconfigure(1, weight=1)
 
         # ── Thermal control center ────────────────────────────────────────────
-        heat_fr = ttk.LabelFrame(tab, text="Thermal Control Center — HEAT GPIO13 / COOL GPIO14 (active high)", padding=8)
-        heat_fr.pack(fill="x", padx=4, pady=(0, 2))
+        thermal_row = ttk.Frame(tab)
+        thermal_row.pack(fill="x", padx=4, pady=(0, 2))
+        heat_fr = ttk.LabelFrame(thermal_row, text="Thermal Control Center — HEAT GPIO13 / COOL GPIO14 (active high)", padding=8)
+        heat_fr.pack(side="left", fill="both")
+
+        thermal_plot_fr = ttk.LabelFrame(thermal_row, text="Temperature / Control", padding=4)
+        thermal_plot_fr.pack(side="right", fill="both", expand=True, padx=(6, 0))
+        self._thermal_control_fig = Figure(figsize=(4.6, 2.7), dpi=100, constrained_layout=True)
+        thermal_grid = self._thermal_control_fig.add_gridspec(2, 1, height_ratios=[5, 1], hspace=0.05)
+        self._thermal_control_ax = self._thermal_control_fig.add_subplot(thermal_grid[0])
+        self._thermal_state_ax = self._thermal_control_fig.add_subplot(thermal_grid[1], sharex=self._thermal_control_ax)
+        self._thermal_control_canvas = FigureCanvasTkAgg(self._thermal_control_fig, master=thermal_plot_fr)
+        self._thermal_control_canvas.get_tk_widget().configure(height=260)
+        self._thermal_control_canvas.get_tk_widget().pack(fill="both", expand=True)
 
         self._thermal_mode_var = tk.StringVar(value="IDLE")
         self._thermal_control_mode_var = tk.StringVar(value="HOLD")
@@ -877,6 +892,80 @@ class EthercatLiveGui:
             self._ser_append("rx", "[thermal cycle stopped; current Auto goal retained]\n")
         self._update_thermal_status()
 
+    def _update_thermal_control_plot(self) -> None:
+        now = time.time()
+        if (now - self._thermal_plot_last_draw) < 1.0:
+            return
+        self._thermal_plot_last_draw = now
+
+        with self.history_lock:
+            timestamps = list(self._ser_ts_history)
+            temperatures_4c = list(self._ser_T_history)
+            temperatures_4f = list(self._ser_co2_history)
+            state_timestamps = list(self._thermal_state_ts)
+            states = list(self._thermal_state_history)
+
+        window_start = max(now - 600.0, min(timestamps + state_timestamps, default=now - 60.0))
+        source = self._thermal_sensor_var.get().strip().upper()
+        plot_x: list[float] = []
+        plot_y: list[float] = []
+        for timestamp, temp_4c, temp_4f in zip(timestamps, temperatures_4c, temperatures_4f):
+            if timestamp < window_start:
+                continue
+            if source == "4C":
+                value = temp_4c
+            elif source == "4F":
+                value = temp_4f
+            elif math.isfinite(temp_4c) and math.isfinite(temp_4f):
+                value = (temp_4c + temp_4f) * 0.5
+            else:
+                value = math.nan
+            if math.isfinite(value):
+                plot_x.append(timestamp - window_start)
+                plot_y.append(value)
+
+        axis = self._thermal_control_ax
+        state_axis = self._thermal_state_ax
+        axis.clear()
+        state_axis.clear()
+        axis.set_title(f"Temperature ({source})", fontsize=9)
+        axis.set_ylabel("C", fontsize=8)
+        axis.grid(True, alpha=0.25)
+        if plot_x:
+            axis.plot(plot_x, plot_y, color="#2a7f9e", linewidth=1.5)
+
+        try:
+            target_c = float(self._thermal_target_var.get())
+            window_c = float(self._thermal_window_var.get())
+        except ValueError:
+            target_c = math.nan
+            window_c = math.nan
+        if math.isfinite(target_c):
+            axis.axhline(target_c, color="#d08c00", linestyle=":", linewidth=1.4, label="Target")
+        if math.isfinite(target_c) and math.isfinite(window_c):
+            axis.axhline(target_c + window_c, color="#888888", linestyle=":", linewidth=0.9)
+            axis.axhline(target_c - window_c, color="#888888", linestyle=":", linewidth=0.9)
+
+        color_map = {"HEAT": "#ef5350", "COOL": "#42a5f5", "IDLE": "#9e9e9e"}
+        filtered_states = [(ts, state) for ts, state in zip(state_timestamps, states) if ts >= window_start]
+        if filtered_states:
+            for index, (timestamp, state) in enumerate(filtered_states):
+                end = filtered_states[index + 1][0] if index + 1 < len(filtered_states) else now
+                start_x = max(0.0, timestamp - window_start)
+                duration = max(0.02, end - max(timestamp, window_start))
+                state_axis.broken_barh([(start_x, duration)], (0, 1), facecolors=color_map.get(state, "#9e9e9e"))
+            state_axis.text(0.99, 0.5, filtered_states[-1][1], transform=state_axis.transAxes,
+                            ha="right", va="center", fontsize=7, color="white", fontweight="bold")
+        state_axis.set_ylim(0, 1)
+        state_axis.set_yticks([])
+        state_axis.set_ylabel("State", fontsize=7)
+        state_axis.set_xlabel("Time (s)", fontsize=8)
+        state_axis.grid(False)
+
+        end_x = max(60.0, now - window_start)
+        axis.set_xlim(0, end_x)
+        self._thermal_control_canvas.draw_idle()
+
     def _serial_clear(self) -> None:
         if self._ser_text is None:
             return
@@ -1202,6 +1291,10 @@ class EthercatLiveGui:
             self._thermal_output_lbl.configure(foreground=output_colors.get(output, "#a6adc8"))
             self._thermal_mode_lbl.configure(foreground="#f9e2af" if mode == "AUTO" else "#a6adc8")
             self._thermal_auto_btn.configure(text="Apply Auto" if mode == "AUTO" else "Start / Apply Auto")
+            now = time.time()
+            with self.history_lock:
+                self._thermal_state_ts.append(now)
+                self._thermal_state_history.append(output)
             self._update_thermal_status()
 
         if math.isfinite(self._esp32_t4c_last):
@@ -2179,6 +2272,9 @@ class EthercatLiveGui:
                             self._ser_motion_history.append(_motion)
                     except Exception:
                         pass
+
+        if hasattr(self, "_thermal_control_canvas"):
+            self._update_thermal_control_plot()
 
     def on_close(self) -> None:
         self._thermal_stop_cycle(log=False)

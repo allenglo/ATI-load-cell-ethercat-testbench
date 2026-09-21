@@ -106,6 +106,8 @@ This heats below 24.5 C, idles from 24.5 C through 25.5 C, and cools above 25.5 
 
 The Python GUI can schedule alternating high and low Auto goals with independent hold times. This scheduler runs on the host and sends ordinary `THERMAL AUTO` commands; it changes goals strictly by elapsed time and does not wait for the sensor to reach either goal. Hold and Cycle are mutually exclusive host modes, and the GUI displays the active phase countdown.
 
+The GUI also plots the selected temperature source against time, target/window thresholds, and the firmware's HEAT/IDLE/COOL output state history.
+
 The OLED status page shows mode, sensor source, active output, HEAT/COOL bits, current control temperature, target, and idle window.
 
 ## Build
