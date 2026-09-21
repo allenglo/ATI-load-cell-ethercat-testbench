@@ -906,33 +906,34 @@ class EthercatLiveGui:
             states = list(self._thermal_state_history)
 
         window_start = max(now - 600.0, min(timestamps + state_timestamps, default=now - 60.0))
-        source = self._thermal_sensor_var.get().strip().upper()
         plot_x: list[float] = []
-        plot_y: list[float] = []
+        plot_4c: list[float] = []
+        plot_4f: list[float] = []
+        plot_avg: list[float] = []
         for timestamp, temp_4c, temp_4f in zip(timestamps, temperatures_4c, temperatures_4f):
             if timestamp < window_start:
                 continue
-            if source == "4C":
-                value = temp_4c
-            elif source == "4F":
-                value = temp_4f
-            elif math.isfinite(temp_4c) and math.isfinite(temp_4f):
-                value = (temp_4c + temp_4f) * 0.5
-            else:
-                value = math.nan
-            if math.isfinite(value):
-                plot_x.append(timestamp - window_start)
-                plot_y.append(value)
+            plot_x.append(timestamp - window_start)
+            plot_4c.append(temp_4c if math.isfinite(temp_4c) else math.nan)
+            plot_4f.append(temp_4f if math.isfinite(temp_4f) else math.nan)
+            plot_avg.append(
+                (temp_4c + temp_4f) * 0.5
+                if math.isfinite(temp_4c) and math.isfinite(temp_4f)
+                else math.nan
+            )
 
         axis = self._thermal_control_ax
         state_axis = self._thermal_state_ax
         axis.clear()
         state_axis.clear()
-        axis.set_title(f"Temperature ({source})", fontsize=9)
+        axis.set_title("Temperature sensors", fontsize=9)
         axis.set_ylabel("C", fontsize=8)
         axis.grid(True, alpha=0.25)
         if plot_x:
-            axis.plot(plot_x, plot_y, color="#2a7f9e", linewidth=1.5)
+            axis.plot(plot_x, plot_4c, color="#e76f51", linewidth=1.2, label="LTC 4C")
+            axis.plot(plot_x, plot_4f, color="#457b9d", linewidth=1.2, label="LTC 4F")
+            axis.plot(plot_x, plot_avg, color="#2a9d8f", linewidth=1.6, label="Average")
+            axis.legend(loc="upper left", fontsize=7, ncol=3)
 
         try:
             target_c = float(self._thermal_target_var.get())
