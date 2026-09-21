@@ -1,0 +1,87 @@
+<hr />
+<h1>Implemented testbench: physical setup and software</h1>
+<p>This section records the bench as implemented. The laptop reads the ATI force/torque sensor over EtherCAT and the ESP32-S3 temperature/control subsystem over USB serial.</p>
+<ac:image ac:align="center" ac:width="1100"><ri:attachment ri:filename="eflex-thermal-testbench-system-overview.png" /></ac:image>
+<h2>Physical connection chain</h2>
+<table><tbody>
+<tr><th>Lane</th><th>Connection</th><th>Purpose</th></tr>
+<tr><td>Load cell</td><td>Dedicated Windows laptop - USB 2.5 GbE adapter - PoE switch - custom Palm/ATI bench cable - EFlex Palm and ATI F/T sensor</td><td>EtherCAT process data: Fx, Fy, Fz, Tx, Ty, Tz</td></tr>
+<tr><td>Temperature/control</td><td>Laptop - USB serial COM33 - ESP32-S3 - sensor strip/OLED/Peltier driver</td><td>Temperature telemetry, motion indication, thermal commands and local status</td></tr>
+</tbody></table>
+<p><strong>Custom cable:</strong> the conductor pinout is not stored with this project. It is a controlled bench harness, not a generic Ethernet/PoE cable. Use the released harness drawing or verify the existing cable before reproducing it.</p>
+<h2>Bench hardware</h2>
+<ul>
+<li><strong>Dedicated laptop:</strong> runs the Python GUI, pysoem EtherCAT master, serial monitor, plots and CSV capture.</li>
+<li><strong>USB Ethernet adapter:</strong> dedicated Realtek 2.5 GbE interface selected by the GUI.</li>
+<li><strong>PoE switch and custom cable:</strong> provide the network/power path to the Palm and ATI load cell.</li>
+<li><strong>ATI EtherCAT F/T sensor:</strong> six-axis force/torque source. The current decoder reads six little-endian signed 32-bit values from the first 24 PDO input bytes. Confirm calibration/scaling before formal measurements.</li>
+<li><strong>ESP32-S3:</strong> reads two LTC2990 devices and an accelerometer, updates the OLED/LEDs, and controls mutually exclusive heat/cool request outputs.</li>
+<li><strong>External Peltier driver:</strong> accepts active-high HEAT and COOL logic. The ESP32 does not drive Peltier power directly.</li>
+</ul>
+<h2>ESP32-S3 pinout</h2>
+<table><tbody>
+<tr><th>Function</th><th>Pin</th><th>Notes</th></tr>
+<tr><td>Touch/page input</td><td>GPIO4</td><td>Capacitive page control</td></tr>
+<tr><td>Second APA102 data / clock</td><td>GPIO5 / GPIO6</td><td>Shared animation frame</td></tr>
+<tr><td>LED clock selector</td><td>GPIO7</td><td>Button to GND; internal pull-up</td></tr>
+<tr><td>OLED SDA / SCL</td><td>GPIO8 / GPIO9</td><td>Dedicated OLED I2C bus</td></tr>
+<tr><td>APA102 ring data / clock</td><td>GPIO11 / GPIO12</td><td>Use level shifting for 5 V LEDs</td></tr>
+<tr><td>HEAT request</td><td>GPIO13</td><td>Active high; external pull-down required</td></tr>
+<tr><td>COOL request</td><td>GPIO14</td><td>Active high; external pull-down required</td></tr>
+<tr><td>Sensor-strip SDA / SCL</td><td>GPIO17 / GPIO18</td><td>50 kHz I2C bus</td></tr>
+</tbody></table>
+<p>Valid outputs are: both low = IDLE; GPIO13 high = HEAT; GPIO14 high = COOL. Firmware prevents both outputs from being high and inserts a 500 ms all-off interval before reversing direction.</p>
+<h2>Sensor strip</h2>
+<table><tbody>
+<tr><th>Device</th><th>Address</th><th>Use</th></tr>
+<tr><td>LTC2990 A</td><td>0x4C</td><td>Temperature, supply and differential-voltage channels</td></tr>
+<tr><td>LTC2990 B</td><td>0x4F</td><td>Second temperature/voltage measurement point</td></tr>
+<tr><td>MPU6050</td><td>0x68</td><td>Motion/disturbance indication on the current bench</td></tr>
+<tr><td>LIS3DH</td><td>0x18 or 0x19</td><td>Supported accelerometer fallback</td></tr>
+</tbody></table>
+<p><a href="https://www.analog.com/en/products/ltc2990.html">LTC2990 product page and data sheet</a></p>
+<h2>Python GUI</h2>
+<ul>
+<li><strong>Live:</strong> force, torque and thermal plots.</li>
+<li><strong>Analysis:</strong> saved-data review and thermal-drift characterization.</li>
+<li><strong>Serial Monitor:</strong> ESP32 telemetry, manual controls, Hold/Cycle settings and thermal state graph.</li>
+<li><strong>Hold:</strong> one target, idle window and sensor source. Target can change while running.</li>
+<li><strong>Cycle:</strong> alternates high/low targets on fixed timers and does not wait for measured temperature to reach either target.</li>
+<li><strong>Thermal graph:</strong> temperature versus time, dotted target/window lines, and red/gray/blue HEAT/IDLE/COOL history.</li>
+</ul>
+<h2>Code map</h2>
+<table><tbody>
+<tr><th>Block</th><th>Responsibility</th></tr>
+<tr><td>GUI adapter discovery and EtherCAT worker</td><td>Selects the dedicated interface, enters OP state and reads ATI PDO data.</td></tr>
+<tr><td>GUI serial worker and parser</td><td>Reads ESP32 telemetry without blocking the UI and synchronizes temperature/control state.</td></tr>
+<tr><td>GUI Hold/Cycle scheduler</td><td>Sends one Auto target or alternates timed high/low targets.</td></tr>
+<tr><td>GUI plots/logging</td><td>Draws live traces and writes synchronized load-cell/serial CSV files.</td></tr>
+<tr><td>ESP32 setup and sensor refresh</td><td>Initializes outputs, I2C, OLED and sensors; refreshes measurements at 2 Hz.</td></tr>
+<tr><td>ESP32 thermal state machine</td><td>Applies HEAT/IDLE/COOL logic, sensor-fault IDLE and direction interlock.</td></tr>
+<tr><td>ESP32 OLED/LED tasks</td><td>Shows local status and drives both APA102 outputs.</td></tr>
+</tbody></table>
+<h2>Startup checklist</h2>
+<ol>
+<li>Keep external Peltier power off.</li>
+<li>Connect the EtherCAT chain and ESP32 USB cable.</li>
+<li>Confirm the USB Ethernet adapter and COM33 appear.</li>
+<li>Start the GUI and connect the ESP32 serial port.</li>
+<li>Confirm both LTC2990 devices report GOOD.</li>
+<li>Confirm thermal state is IDLE, then enable external Peltier power.</li>
+<li>Connect EtherCAT and verify a nonzero working counter.</li>
+<li>Enable CSV logging before the test run.</li>
+</ol>
+<h2>Safety and limits</h2>
+<ul>
+<li>GPIO13/GPIO14 are logic signals only. Use external isolation, pull-downs, current protection and over-temperature cutoff.</li>
+<li>The software interlock does not replace hardware prevention of simultaneous Peltier polarity commands.</li>
+<li>The GUI target range does not certify the fixture, Peltier, adhesive, sensor or test article for that temperature.</li>
+<li>COM33 and the adapter name are machine-specific.</li>
+</ul>
+<h2>Source and handoff</h2>
+<ul>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench">GitHub repository</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench/blob/main/docs/PHYSICAL_SETUP.md">Physical setup</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench/blob/main/host-tools/launchpad_loadcell_live_gui.py">Python GUI</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench/blob/main/firmware/esp32s3/src/main.cpp">ESP32-S3 firmware</a></li>
+</ul>

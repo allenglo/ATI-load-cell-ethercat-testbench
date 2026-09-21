@@ -2,6 +2,8 @@
 
 Combined handoff repository for the EFlex load-cell test setup. The system includes the AM243x/ATI EtherCAT controller, host-side Python tools and GUI, USB-to-Ethernet/PoE utilities, and the ESP32-S3 OLED/LED/LTC2990 subsystem.
 
+Start with the [physical testbench setup and system overview](docs/PHYSICAL_SETUP.md).
+
 ## Repository layout
 
 - `controller/am243x_loadcell/` - AM243x controller project and load-cell firmware.
