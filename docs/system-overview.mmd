@@ -1,29 +1,13 @@
 flowchart LR
-    subgraph HOST[Dedicated Windows laptop]
-        GUI[Python testbench GUI]
-        USBETH[USB 2.5 GbE adapter]
-        SERIAL[USB serial COM33]
-    end
+    GUI[Python GUI] --> ETH[USB Ethernet adapter]
+    ETH --> POE[PoE switch]
+    POE --> HARNESS[Custom Palm ATI harness]
+    HARNESS --> ATI[ATI EtherCAT load cell]
 
-    GUI <-->|EtherCAT frames| USBETH
-    USBETH <-->|Ethernet| POE[PoE switch]
-    POE <-->|Custom Palm and ATI bench cable| ATI[EFlex Palm and ATI F/T load cell]
-
-    GUI <-->|115200 baud| SERIAL
-    SERIAL <-->|USB UART| ESP[ESP32-S3 controller]
-    ESP -->|GPIO8 and GPIO9| OLED[OLED display]
-    ESP <-->|GPIO17 and GPIO18 I2C| SENSORS[Sensor strip: LTC2990 0x4C and 0x4F; MPU6050 0x68]
-    ESP -->|GPIO13 HEAT| DRIVER[External isolated Peltier driver]
-    ESP -->|GPIO14 COOL| DRIVER
-    DRIVER --> STACK[Peltier and cold-plate stack]
-    ESP -->|GPIO11 DATA; GPIO12 CLOCK| RING[APA102 ring]
-    ESP -->|GPIO5 DATA; GPIO6 CLOCK| ARRAY[Second APA102 array]
-
-    classDef host fill:#e8f1fb,stroke:#24527a,color:#111;
-    classDef network fill:#fff3d6,stroke:#8a6415,color:#111;
-    classDef control fill:#e8f6ec,stroke:#2d6b3f,color:#111;
-    classDef load fill:#fbe9e7,stroke:#8a3a2e,color:#111;
-    class GUI,USBETH,SERIAL host;
-    class POE,ATI network;
-    class ESP,OLED,SENSORS control;
-    class DRIVER,STACK,RING,ARRAY load;
+    GUI --> SERIAL[USB serial COM33]
+    SERIAL --> ESP[ESP32 S3]
+    ESP --> OLED[OLED GPIO8 GPIO9]
+    ESP --> SENSORS[LTC2990 4C 4F and MPU6050]
+    ESP --> DRIVER[Peltier driver]
+    DRIVER --> STACK[Peltier cold plate stack]
+    ESP --> LEDS[APA102 LED outputs]
