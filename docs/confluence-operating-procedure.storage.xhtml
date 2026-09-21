@@ -1,0 +1,83 @@
+<h1>Purpose</h1>
+<p>Use this bench to correlate ATI force/torque output with controlled temperature changes on the EFlex Palm assembly. The GUI records EtherCAT load-cell data, ESP32 temperature data, and thermal output state on one timeline.</p>
+<p>This is an engineering characterization bench. It is not an environmental-chamber qualification system or a safety-rated thermal controller.</p>
+<ac:image ac:align="center" ac:width="1050"><ri:attachment ri:filename="eflex-thermal-testbench-system-overview.png" /></ac:image>
+<h1>Bench configuration</h1>
+<ul>
+<li>Dedicated Windows laptop running the Python GUI.</li>
+<li>USB 2.5 GbE adapter to PoE switch.</li>
+<li>PoE switch to the custom Palm/ATI bench harness.</li>
+<li>ATI EtherCAT F/T sensor and EFlex Palm assembly.</li>
+<li>ESP32-S3 on USB serial, normally COM33.</li>
+<li>Two LTC2990 devices at <code>0x4C</code> and <code>0x4F</code>; MPU6050 at <code>0x68</code>.</li>
+<li>External Peltier driver controlled by active-high GPIO13 HEAT and GPIO14 COOL.</li>
+</ul>
+<p>Full wiring and pinout: <a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench/blob/main/docs/PHYSICAL_SETUP.md">GitHub physical setup</a>.</p>
+<h1>Before use</h1>
+<ol>
+<li>Inspect the Peltier stack, cold plate, thermal interfaces, sensor strip, harnesses, and cooling path.</li>
+<li>Keep Peltier power disabled.</li>
+<li>Confirm external pull-downs keep HEAT and COOL off when the ESP32 is reset or unpowered.</li>
+<li>Connect the USB Ethernet adapter, PoE switch, custom Palm/ATI harness, and ESP32 USB cable.</li>
+<li>Confirm the expected network adapter and ESP32 COM port appear in Windows.</li>
+</ol>
+<h1>Start the bench</h1>
+<ol>
+<li>Start <code>host-tools/launchpad_loadcell_live_gui.py</code>.</li>
+<li>Select the dedicated Realtek USB 2.5 GbE adapter and <strong>ATI Load Cell</strong> profile.</li>
+<li>Connect ESP32 serial at 115200 baud.</li>
+<li>Confirm both LTC2990 devices report <code>GOOD</code> and thermal state is <code>IDLE</code>.</li>
+<li>Connect EtherCAT. Confirm the ATI sensor reaches OP and the working counter is nonzero.</li>
+<li>Enable load-cell and serial CSV logging.</li>
+<li>Enable external Peltier power only after the checks above pass.</li>
+</ol>
+<h1>Hold mode</h1>
+<ol>
+<li>Select <strong>Hold</strong>.</li>
+<li>Enter target temperature, idle window, and sensor source (<code>AVG</code>, <code>4C</code>, or <code>4F</code>).</li>
+<li>Select <strong>Apply Hold</strong>.</li>
+<li>Confirm the status bar, dotted graph thresholds, and HEAT/IDLE/COOL strip agree with the command.</li>
+</ol>
+<p>The target may be changed while Hold is active. The GUI applies edits after 600 ms, or immediately when Enter or <strong>Apply Hold</strong> is used.</p>
+<h1>Cycle mode</h1>
+<ol>
+<li>Select <strong>Cycle</strong>.</li>
+<li>Enter high target and high hold time.</li>
+<li>Enter low target and low hold time.</li>
+<li>Select <strong>Start Cycle</strong>.</li>
+<li>Confirm the phase countdown advances HIGH to LOW and repeats.</li>
+</ol>
+<p>Cycle timing starts when each goal is sent. It does not wait for measured temperature to reach the goal. Settings are captured when the cycle starts; stop and restart to apply changed cycle settings.</p>
+<h1>Manual control</h1>
+<table><tbody>
+<tr><th>Command</th><th>Result</th></tr>
+<tr><td>Heat</td><td>Requests active-high GPIO13.</td></tr>
+<tr><td>Cool</td><td>Requests active-high GPIO14.</td></tr>
+<tr><td>Idle</td><td>Sets both outputs low.</td></tr>
+</tbody></table>
+<p>A manual command stops Cycle first. Firmware prevents simultaneous HEAT and COOL and inserts a 500 ms all-off interval before reversing direction.</p>
+<h1>Shutdown</h1>
+<ol>
+<li>Stop Cycle if active.</li>
+<li>Select <strong>Idle</strong> and confirm <code>heat=0 cool=0</code>.</li>
+<li>Disable external Peltier power.</li>
+<li>Stop CSV capture and disconnect EtherCAT.</li>
+<li>Close the GUI, then disconnect bench cables as needed.</li>
+</ol>
+<h1>Run acceptance checks</h1>
+<ul>
+<li>Both LTC2990 devices remain <code>GOOD</code>.</li>
+<li>ATI EtherCAT working counter remains nonzero.</li>
+<li>Force/torque and temperature traces advance continuously.</li>
+<li>Thermal output history matches the commanded mode.</li>
+<li>HEAT and COOL are never active together.</li>
+<li>The run ends in IDLE.</li>
+</ul>
+<h1>References</h1>
+<ul>
+<li><a href="https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/446904027/Peltier+thermal+testbench+dev+notes+and+purchase+estimate">Development notes and purchase estimate</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench">GitHub repository</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench/blob/main/docs/PHYSICAL_SETUP.md">Physical setup and pinout</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench/blob/main/host-tools/launchpad_loadcell_live_gui.py">Python GUI</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench/blob/main/firmware/esp32s3/src/main.cpp">ESP32-S3 firmware</a></li>
+</ul>

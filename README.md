@@ -3,6 +3,9 @@
 Combined handoff repository for the EFlex load-cell test setup. The system includes the AM243x/ATI EtherCAT controller, host-side Python tools and GUI, USB-to-Ethernet/PoE utilities, and the ESP32-S3 OLED/LED/LTC2990 subsystem.
 
 Start with the [physical testbench setup and system overview](docs/PHYSICAL_SETUP.md).
+For bench operation, use the [Peltier thermal testbench operating procedure](docs/OPERATING_PROCEDURE.md).
+
+Confluence: [development notes and purchase estimate](https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/446904027/Peltier+thermal+testbench+dev+notes+and+purchase+estimate) | [operating procedure](https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/456894964/Peltier+thermal+testbench+-+operating+procedure)
 
 ## Repository layout
 

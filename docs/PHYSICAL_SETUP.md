@@ -1,5 +1,7 @@
 # EFlex thermal and load-cell testbench
 
+Operating steps: [Peltier thermal testbench operating procedure](OPERATING_PROCEDURE.md).
+
 ## Purpose
 
 This bench records ATI force/torque data and temperatures while controlling a Peltier stack. One Windows laptop runs the Python GUI. The load cell uses EtherCAT through a dedicated USB Ethernet adapter. The ESP32-S3 handles temperature sensing, the OLED, LEDs, and the active-high heating and cooling requests.
