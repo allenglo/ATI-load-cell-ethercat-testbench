@@ -4,6 +4,7 @@ Combined handoff repository for the EFlex load-cell test setup. The system inclu
 
 Start with the [physical testbench setup and system overview](docs/PHYSICAL_SETUP.md).
 For bench operation, use the [Peltier thermal testbench operating procedure](docs/OPERATING_PROCEDURE.md).
+The separate power-platform concept decision is in [POWER_ARCHITECTURE_DECISION.storage.xhtml](docs/POWER_ARCHITECTURE_DECISION.storage.xhtml) and the [Confluence decision page](https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/456898737/24+V+battery+UPS+and+USB-C+power+architecture+decision).
 
 Confluence: [development notes and purchase estimate](https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/446904027/Peltier+thermal+testbench+dev+notes+and+purchase+estimate) | [operating procedure](https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/456894964/Peltier+thermal+testbench+-+operating+procedure)
 

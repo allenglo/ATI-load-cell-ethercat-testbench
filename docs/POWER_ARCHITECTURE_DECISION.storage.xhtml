@@ -1,6 +1,6 @@
 <h1>Decision</h1>
-<p>Use a modular three-node power architecture rather than trying to make one IC provide the PSU input, battery, protected load bus, USB-C ports, BMS, fuel gauge, and programmable lab output.</p>
-<p>The preferred baseline is <strong>BQ25756 + USB-C PD 3.1 EPR controller + smart BMS/fuel gauge + separate digitally controlled output stage</strong>.</p>
+<p>Use a modular three-node power architecture: 24 V PSU input, battery, and protected load bus. Do not make one IC responsible for the charger, BMS, fuel gauge, programmable output and every optional interface.</p>
+<p>The preferred battery/UPS baseline is <strong>BQ25756 + independent BMS and fuel gauge + protected PSU-to-load path</strong>. Add the programmable lab output as a separate power stage. USB-C PD is an optional port subsystem, not a prerequisite for the base platform.</p>
 <h1>Required system</h1>
 <ul>
 <li>24 V PSU input.</li>
@@ -9,24 +9,21 @@
 <li>Battery charge and battery-to-load UPS operation.</li>
 <li>Battery percentage, remaining capacity, health and fault reporting.</li>
 <li>Per-cell monitoring, balancing and hard battery protection.</li>
-<li>USB-C PD input/output at 140 W or higher, with standard EPR support.</li>
 <li>At least 10 A capability on the internal/output bus; USB-C remains limited by its negotiated contract.</li>
+<li>Optional USB-C PD input/output at 140 W or higher using standard EPR.</li>
 <li>MCU/I2C/SMBus control of voltage, current limits and telemetry.</li>
 <li>Medical-robotics isolation and fault containment.</li>
 </ul>
 <h1>Architecture</h1>
-<pre>24 V isolated PSU
-    |
- fuse, TVS, reverse protection, hot-swap / ideal diode
-    |
-    +---- protected load bus
-    |
-    +---- BQ25756 bidirectional battery stage ---- battery pack
-                                      |
-                              smart BMS + fuel gauge
+<pre>24 V isolated PSU --> protection / ORing --> protected LOAD BUS --> robot loads
+                                                |       |
+                                                |       +--> programmable 0-24 V output
+                                                |
+                                               +--> BQ25756 bidirectional stage -- BATTERY
+                                                                                  |--> BMS
+                                                                                  +--> fuel gauge
 
- load bus ---- programmable digital DC/DC output ---- protected 0-24 V lab output
- load bus ---- USB PD 3.1 EPR source controller ---- USB-C output</pre>
+Optional: protected load bus --> USB-C PD EPR source module --> USB-C port</pre>
 <p>The PSU-to-load path is external to the charger IC. It must provide reverse-current blocking and controlled source/battery arbitration.</p>
 <h1>Candidate decision</h1>
 <table><tbody>
@@ -69,11 +66,108 @@
 <h1>References</h1>
 <ul>
 <li><a href="https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/446904027/Peltier+thermal+testbench+dev+notes+and+purchase+estimate">Peltier thermal testbench development notes</a></li>
-<li><a href="https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/456894964/Peltier+thermal+testbench+-+operating+procedure">Thermal testbench operating procedure</a></li>
+<li><a href="https://www.ti.com/product/TPS26750">TI TPS26750 USB PD 3.2 EPR controller</a></li>
 <li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench">Integrated testbench repository</a></li>
 <li><a href="https://www.ti.com/product/BQ25756">TI BQ25756</a></li>
 <li><a href="https://www.renesas.com/en/products/raa489118">Renesas RAA489118</a></li>
 <li><a href="https://www.renesas.com/en/products/raa489400">Renesas RAA489400</a></li>
 <li><a href="https://www.infineon.com/products/universal-serial-bus/usb-c-high-voltage-microcontrollers/ez-pd-pmg1-b2-battery-charge-controller-with-usb-c-pd-mcu">Infineon EZ-PD PMG1-B2</a></li>
 <li><a href="https://www.monolithicpower.com/en/mp2798.html">MPS MP2798</a></li>
+</ul>
+<hr />
+<h1>Expanded design basis</h1>
+<p>This section expands the concept selection for a digitally managed 24 V-class power platform. USB-C PD is an optional add-on; the primary design problem is a protected PSU/battery/load system with measurable SOC and a separate programmable output.</p>
+<h2>Three electrical nodes</h2>
+<pre>24 V PSU input ---- protection / ideal diode / ORing ---- protected LOAD BUS ---- robot loads
+                                                         |                 |
+                                                         |                 +-- programmable output
+                                                         |
+                                                         +-- bidirectional battery stage ---- BATTERY
+                                                                                              |-- BMS
+                                                                                              +-- fuel gauge</pre>
+<p>With the PSU present, its protected path supplies the load while the charger replenishes the battery within the source power budget. When the PSU is absent, the battery stage must regulate the load bus without backfeeding the failed input. The charger is only one branch of this three-node system; external ORing, hot-swap/precharge, reverse blocking and state control are still required.</p>
+<h2>Weighted concept comparison</h2>
+<p>Scores are 0–5: 0 means unusable or a major mismatch; 5 means excellent or largely built in. They are architecture-fit judgments from the stated requirements, not measured product performance. The BMS-first column is a system strategy, not one IC.</p>
+<table><tbody>
+<tr><th>Requirement</th><th>BQ25756 + PD</th><th>RAA489118 + 489400</th><th>PMG1-B2</th><th>ISL81601 / LT8708</th><th>BMS-first modular</th></tr>
+<tr><td>24 V PSU + battery + load</td><td>4</td><td>5</td><td>4</td><td>1</td><td>5</td></tr>
+<tr><td>All-digital / I2C-friendly</td><td>5</td><td>5</td><td>4</td><td>0</td><td>5</td></tr>
+<tr><td>Battery % / remaining Ah</td><td>1</td><td>1</td><td>1</td><td>0</td><td>5</td></tr>
+<tr><td>Battery SOH / pack faults</td><td>2</td><td>2</td><td>2</td><td>1</td><td>5</td></tr>
+<tr><td>Per-cell monitoring / balancing</td><td>0</td><td>0</td><td>0</td><td>0</td><td>5</td></tr>
+<tr><td>140 W USB-C input (optional)</td><td>4</td><td>5</td><td>5</td><td>2</td><td>4</td></tr>
+<tr><td>140 W USB-C output (optional)</td><td>4</td><td>4</td><td>3</td><td>2</td><td>4</td></tr>
+<tr><td>Multiple USB-C outputs (optional)</td><td>3</td><td>3</td><td>2</td><td>1</td><td>4</td></tr>
+<tr><td>MCU-set output voltage/current</td><td>4</td><td>4</td><td>4</td><td>0</td><td>5</td></tr>
+<tr><td>10 A+ internal bus/output</td><td>5</td><td>3</td><td>4</td><td>5</td><td>5</td></tr>
+<tr><td>Voltage/current telemetry</td><td>5</td><td>4</td><td>4</td><td>1</td><td>5</td></tr>
+<tr><td>Minimal IC/BOM count</td><td>3</td><td>4</td><td>5</td><td>1</td><td>3</td></tr>
+<tr><td>Minimal firmware/engineering</td><td>4</td><td>4</td><td>2</td><td>0</td><td>3</td></tr>
+<tr><td>Voltage/transient margin</td><td>5</td><td>2</td><td>4</td><td>5</td><td>5</td></tr>
+<tr><td>Isolation suitability*</td><td>2</td><td>2</td><td>2</td><td>2</td><td>5</td></tr>
+<tr><th>Overall system score</th><th>4.2</th><th>4.0</th><th>3.6</th><th>1.4</th><th>4.7</th></tr>
+</tbody></table>
+<p>*The isolation score reflects how naturally the architecture accommodates separately selected isolation barriers; none of the listed charger ICs provides medical isolation by itself.</p>
+<h2>Candidate ranking</h2>
+<ol>
+<li><strong>BQ25756 + PD controller + smart BMS/fuel gauge — 4.2/5 for the charger-platform option.</strong> Most mature high-voltage I2C battery stage in this set; add the independent BMS/gauge and external three-node power path.</li>
+<li><strong>PMG1-B2 + smart BMS — 3.6/5.</strong> Most integrated digital PD/charger platform, but its firmware and validation burden is higher. Manufacturer reference materials describe 240 W sink capability; the listed reference design sources 27 W, so do not assume a 140 W source implementation without a matching design.</li>
+<li><strong>RAA489118 + RAA489400 + smart BMS — 4.0/5.</strong> Attractive SMBus solution for a pack with comfortable margin below 30 V. A full 8S LiFePO4 pack reaches about 29.2 V, leaving little transient headroom; treat 6S/7S or a lower-voltage configuration as the better fit unless Renesas confirms the exact use case.</li>
+<li><strong>ISL81601 / LT8708 — 1.4/5 under the digital-control requirement.</strong> Excellent power-stage flexibility, but analog control loops and external supervisory hardware conflict with the no-analog-command preference.</li>
+<li><strong>BMS-first modular system — 4.7/5 as a system strategy.</strong> Not a charger substitute. It best covers SOC, SOH, balancing and independent pack safety when combined with a charger and output stages.</li>
+</ol>
+<h1>Battery safety and SOC component starting point</h1>
+<h2>Cell monitor and protection: TI BQ76952</h2>
+<p>BQ76952 is a concrete candidate for a 7S/8S LiFePO4 pack: TI lists 3–16 series cells, I2C, cell-voltage measurement, temperature inputs, open-wire detection and cell/pack protection functions. It supports cell-balancing control; balancing resistors/FETs, heat dissipation, pack switches, fuse and fault response remain part of the pack design. Treat it as a monitor/protector, not the finished battery pack or a fuel gauge.</p>
+<h2>Pack fuel gauge: TI BQ34Z100-R2</h2>
+<p>BQ34Z100-R2 is a concrete pack-level fuel-gauge candidate. TI lists LiFePO4 chemistry, I2C and Impedance Track; the BQ34Z100EVM supports 1S–16S pack evaluation. It needs a correctly placed bidirectional current shunt and pack-specific configuration/learning. Validate SOC accuracy over the selected cell count, current range, temperature and aging profile before using SOC for safety decisions.</p>
+<p>The charger, BMS and gauge have distinct jobs: BQ25756 manages charge/reverse conversion and converter telemetry; BQ76952 monitors individual cells and provides independent pack protections; BQ34Z100-R2 estimates remaining capacity. Coordinate pack-current sensing and calibration across them. The BMS hard cutoff must remain independent of MCU software and fuel-gauge accuracy.</p>
+<h1>Medical isolation and fault containment</h1>
+<p>Power components do not make a medical system compliant by themselves. The required isolation classification and leakage-current limits depend on intended use, applied-part classification, patient connection, operator access, enclosure and the system risk analysis. The safety/compliance owner must set those requirements before choosing an isolation barrier.</p>
+<ul>
+<li>Start from an appropriately certified isolated PSU. Select required MOOP/MOPP barriers from the product risk analysis, not by copying a generic reference design.</li>
+<li>Keep the battery BMS local to the pack. For communication across module/chassis domains, consider isolated CAN, for example TI ISO1042, with a separately designed isolated-side supply.</li>
+<li>Review USB-C shield/VBUS, Ethernet shield, debug connectors, external DC outputs, heatsinks and chassis as possible paths across isolation boundaries.</li>
+<li>Provide fuse, reverse-current blocking, surge protection, hardware current limit, thermal cutout and output disconnect independently of MCU firmware.</li>
+<li>On MCU reset, communication loss or invalid telemetry, define a hardware-enforced safe state: charger/output disabled or bounded by independent protection.</li>
+</ul>
+<h1>Efficiency: BQ25756 versus ISL81601</h1>
+<p>A controller-only efficiency ranking is not valid. Both are four-switch bidirectional buck-boost controllers using an external power stage. The MOSFETs, inductor, shunts, switching frequency, dead time, layout, gate drive and thermal design dominate the result. BQ25756 prioritizes charger policy/I2C integration; ISL81601 offers independent input/output voltage and current loops. Neither fact alone establishes higher efficiency.</p>
+<p>Compare real candidate boards at identical operating points: 24 V input to selected pack charge voltage, then battery-to-24 V load-bus reverse operation. Measure at 25%, 50%, 75% and 100% load, in both directions and after thermal equilibrium. Record calibrated Pin/Pout, frequency, FET and inductor part numbers, shunts, board temperature and airflow. Calculate <code>eta = Pout / Pin * 100%</code>. Compare both optimized implementations and, separately, a common-power-stage comparison if the controller interface permits it. Use the BQ25756EVM and an ISL81601 evaluation platform as starting points; do not compare peaks from different voltage/current conditions.</p>
+<h1>MCU and firmware approach</h1>
+<h2>BQ25756 baseline</h2>
+<p>Use the system MCU as supervisor over I2C. It should own source-present detection, input power budget, charger voltage/current targets, reverse-mode transitions, load priorities, low-SOC derating, fault logging and controlled recovery. A general-purpose MCU from the existing product family may be suitable, but select it after I2C isolation, watchdog independence, ADC needs, lifecycle and safety analysis are defined.</p>
+<h2>PMG1-B2 option</h2>
+<p>PMG1-B2 combines USB-C PD and a 55 V buck-boost charging controller with an on-chip Cortex-M0 and peripherals. Development would use Infineon ModusToolbox and the PMG1 SDK: configure the PD stack, charger profile, battery limits, state transitions and fault handling, then validate against the specific reference board. Keep a separate BMS for cell protection. PMG1-B2 is attractive when integration is more important than reusing the external system MCU.</p>
+<h1>10 A programmable output stage</h1>
+<p><strong>First controller candidate: TI LM51772.</strong> TI lists a 3.5–55 V input, 3.3–55 V output four-switch buck-boost controller with I2C. It is a controller with external FETs, not a turnkey 0–24 V/10 A supply. Its published EVM is a 9–48 V to 20 V, 5 A example; the 240 W target therefore requires a new thermal/power-stage design and validation. Confirm the I2C register map supports the desired voltage/current-limit commands and define a separate output-disable state below the 3.3 V regulation floor.</p>
+<p>Do not use TPS55288 for a 24 V output: its specified output maximum is 21.26 V. For any 10 A design, separately size the MOSFETs, magnetics, shunts, connectors and copper for continuous current, then add hardware current limit, short-circuit response, thermal sensing, reverse-current protection and output disconnect. A software setpoint is not a substitute for these protections.</p>
+<h1>USB-C PD is an optional module</h1>
+<p>The base platform should operate from the 24 V PSU and battery without USB-C. If 140 W PD EPR is added, it requires an EPR-capable source/sink controller, a protected 28 V/5 A rail, VBUS discharge, cable validation and power-budget policy. Multiple ports need separate port power paths and an explicit shared-power allocator. Dell 130 W and other vendor-specific behavior is an interoperability target, not a guarantee of standard PD.</p>
+<h1>Open design work</h1>
+<ol>
+<li>Freeze battery cell count, chemistry, charge ceiling, capacity and peak/continuous current. A 7S LiFePO4 pack leaves more margin below 30 V; retain BQ25756 if full 8S/29.2 V operation is required.</li>
+<li>Select and evaluate BQ76952 plus BQ34Z100-R2, including balance-network thermal design, pack-current shunt placement and SOC-learning plan; compare against traceable smart-BMS modules.</li>
+<li>Prototype BQ25756 and ISL81601 on evaluation platforms at matched operating points before making an efficiency claim or committing to the alternative.</li>
+<li>Prototype LM51772 as the digitally programmable load-output controller; prove 24 V/10 A thermal operation and hardware protection.</li>
+<li>Define and test three-node transitions: PSU present, charging, battery backup, source return, low SOC, BMS trip, output short and MCU reset.</li>
+<li>Set isolation/leakage requirements with the safety owner; document barriers and test evidence for every external connector/domain.</li>
+<li>Add USB-C only after the core PSU/battery/load and programmable output stages are stable. Validate each PD port/cable/contract with a protocol analyzer.</li>
+</ol>
+<h1>Manufacturer references</h1>
+<ul>
+<li><a href="https://www.ti.com/product/BQ25756">BQ25756</a>; <a href="https://www.ti.com/tool/BQ25756EVM">BQ25756EVM</a></li>
+<li><a href="https://www.ti.com/product/BQ76952">BQ76952 BMS monitor</a>; <a href="https://www.ti.com/product/BQ34Z100-R2">BQ34Z100-R2 fuel gauge</a></li>
+<li><a href="https://www.ti.com/product/LM51772">LM51772 output controller</a>; <a href="https://www.ti.com/product/TPS55288">TPS55288 limits</a></li>
+<li><a href="https://www.ti.com/product/ISO1042">ISO1042 isolated CAN</a>; <a href="https://www.ti.com/product/TPS26750">TPS26750 USB PD 3.2 EPR controller</a></li>
+<li><a href="https://www.renesas.com/en/products/raa489118">RAA489118</a>; <a href="https://www.renesas.com/en/products/raa489400">RAA489400</a></li>
+<li><a href="https://www.renesas.com/en/products/isl81601">ISL81601</a>; <a href="https://www.renesas.com/en/products/isl81801">ISL81801</a></li>
+<li><a href="https://www.infineon.com/products/universal-serial-bus/usb-c-high-voltage-microcontrollers/ez-pd-pmg1-b2-battery-charge-controller-with-usb-c-pd-mcu">Infineon EZ-PD PMG1-B2</a></li>
+<li><a href="https://www.analog.com/en/products/max17263.html">ADI MAX17263 fuel gauge</a></li>
+</ul>
+<h1>Project links</h1>
+<ul>
+<li><a href="https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/446904027/Peltier+thermal+testbench+dev+notes+and+purchase+estimate">Peltier thermal testbench development notes</a></li>
+<li><a href="https://docs.globusmedical.com/confluence/spaces/EFLEX/pages/456894964/Peltier+thermal+testbench+-+operating+procedure">Thermal testbench operating procedure</a></li>
+<li><a href="https://github.com/allenglo/ATI-load-cell-ethercat-testbench">Integrated testbench repository</a></li>
 </ul>
